@@ -1,0 +1,13 @@
+name: biobb_CMIP_tutorial
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - biobb_io==3.7.0
+  - biobb_cmip==3.7.8
+  - biobb_structure_utils==3.7.6
+  - nb_conda_kernels
+  - plotly
+  - nglview
+  - conda
+

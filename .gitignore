@@ -1,0 +1,10 @@
+guidelines.md
+log*.*
+!logo.png
+.ipynb_checkpoints/
+biobb_wf_cmip/notebooks/*.png
+biobb_wf_cmip/notebooks/*.gif
+biobb_wf_cmip/notebooks/*.web.ipynb
+biobb_wf_cmip/notebooks/*.docs.ipynb
+*.old.ipynb
+*.bk.ipynb
