@@ -4,13 +4,14 @@ channels:
   - bioconda
   - salilab
 dependencies:
-  - biobb_io==3.7.0
-  - biobb_structure_utils==3.7.6
-#  - biobb_model
-  - biobb_chemistry==3.7.0
-  - biobb_amber==3.7.1
+  - biobb_io==3.8.0
+  - biobb_structure_utils==3.8.0
+  - biobb_model==3.8.0
+  - biobb_chemistry==3.8.0
+  - biobb_amber==3.8.0
+  - ipywidgets==7.6.6
   - modeller
   - nb_conda_kernels
+  - jupyter_contrib_nbextensions
   - nglview
   - conda
-
