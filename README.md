@@ -5,9 +5,9 @@
 
 ***
 
-This tutorial aims to illustrate the process of **checking** a **molecular structure**. The workflow uses the **BioExcel Building Blocks library (biobb)**. The particular structure used is the complex formed by the **SARS-CoV-2 Receptor Binding Domain and the human Angiotensin Converting Enzyme 2** (PDB code [6M0J](https://www.rcsb.org/structure/6m0j)).
+This tutorial aims to illustrate the process of **checking** a **molecular structure** before using it as an input for a **Molecular Dynamics** simulation. The workflow uses the **BioExcel Building Blocks library (biobb)**. The particular structure used is the crystal structure of **human Adenylate Kinase 1A (AK1A)**, in complex with the **AP5A inhibitor** (PDB code [1Z83](https://www.rcsb.org/structure/1z83)).  
 
-**Structure checking** is a key step before setting up a protein system for **simulations**. A number of **common issues** found in structures at **Protein Data Bank** may compromise the success of the simulation, or may suggest that longer equilibration procedures are necessary.
+**Structure checking** is a key step before setting up a protein system for **simulations**. A number of **common issues** found in structures at **Protein Data Bank** may compromise the success of the **simulation**, or may suggest that longer **equilibration** procedures are necessary.
 
 The **workflow** shows how to:
 
