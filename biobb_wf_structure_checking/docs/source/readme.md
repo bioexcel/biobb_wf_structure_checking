@@ -61,7 +61,7 @@ Click here to [execute tutorial in Binder](https://bioexcel-binder.tsi.ebi.ac.uk
 ***
 
 ## Version
-2023.2 Release
+2023.3 Release
 
 ## Copyright & Licensing
 This software has been developed in the [MMB group](http://mmb.irbbarcelona.org) at the [BSC](http://www.bsc.es/) & [IRB](https://www.irbbarcelona.org/) for the [European BioExcel](http://bioexcel.eu/), funded by the European Commission (EU H2020 [823830](http://cordis.europa.eu/projects/823830), EU H2020 [675728](http://cordis.europa.eu/projects/675728)).
