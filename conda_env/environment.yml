@@ -12,7 +12,8 @@ dependencies:
   - modeller
   - jupyter_client==7.3.2
   - nb_conda_kernels
-  - importlib_metadata
+  # - importlib_metadata
+  - traitlets==5.9.0
   - jupyter_contrib_nbextensions
   - plotly
   - nglview
