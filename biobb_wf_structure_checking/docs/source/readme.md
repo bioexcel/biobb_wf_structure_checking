@@ -56,7 +56,7 @@ jupyter-notebook biobb_wf_structure_checking/notebooks/biobb_wf_structure_checki
 
 Click here to [view tutorial in Read the Docs](https://biobb-wf-structure-checking.readthedocs.io/en/latest/tutorial.html)
 
-Click here to [execute tutorial in Binder](https://bioexcel-binder.tsi.ebi.ac.uk/v2/gh/bioexcel/biobb_wf_structure_checking/main?filepath=biobb_wf_structure_checking%2Fnotebooks%2Fbiobb_wf_structure_checking.ipynb)
+Click here to [execute tutorial in Binder](https://mybinder.org/v2/gh/bioexcel/biobb_wf_structure_checking/HEAD?labpath=biobb_wf_structure_checking%2Fnotebooks%2Fbiobb_wf_structure_checking.ipynb)
 
 ***
 
