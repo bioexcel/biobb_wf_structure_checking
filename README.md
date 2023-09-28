@@ -35,9 +35,10 @@ An implementation of this workflow in a **web-based Graphical User Interface (GU
 
 ### Auxiliar libraries used
 
-* [nb_conda_kernels](https://github.com/Anaconda-Platform/nb_conda_kernels): Enables a Jupyter Notebook or JupyterLab application in one conda environment to access kernels for Python, R, and other languages found in other environments.
+* [modeller](https://salilab.org/modeller/): Software used for homology or comparative modeling of protein three-dimensional structures.
+* [jupyter](https://jupyter.org/): Free software, open standards, and web services for interactive computing across all programming languages.
 * [nglview](http://nglviewer.org/#nglview): Jupyter/IPython widget to interactively view molecular structures and trajectories in notebooks.
-* [ipywidgets](https://github.com/jupyter-widgets/ipywidgets): Interactive HTML widgets for Jupyter notebooks and the IPython kernel.
+* [plotly](https://plot.ly/python/offline/): Python interactive graphing library integrated in Jupyter notebooks.
 
 ### Conda Installation and Launch
 
@@ -46,7 +47,6 @@ git clone https://github.com/bioexcel/biobb_wf_structure_checking.git
 cd biobb_wf_structure_checking
 conda env create -f conda_env/environment.yml
 conda activate biobb_wf_structure_checking
-jupyter-nbextension enable --py --user widgetsnbextension
 jupyter-notebook biobb_wf_structure_checking/notebooks/biobb_wf_structure_checking.ipynb
 ```
 
