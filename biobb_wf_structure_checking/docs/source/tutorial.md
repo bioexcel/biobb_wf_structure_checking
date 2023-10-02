@@ -703,7 +703,7 @@ from biobb_model.model.fix_backbone import fix_backbone
 pdb_backbone = pdbCode + ".backbone.pdb"
 
 prop = {
-    'modeller_key' : "XXXX"
+    
 }
 
 fix_backbone(
