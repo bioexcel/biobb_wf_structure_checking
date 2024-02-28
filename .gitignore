@@ -13,6 +13,8 @@ biobb_wf_structure_checking/notebooks/*.rst
 biobb_wf_structure_checking/notebooks/*.top
 biobb_wf_structure_checking/notebooks/*.fasta
 biobb_wf_structure_checking/notebooks/*.json
+biobb_wf_structure_checking/docs/notebooks/
+biobb_wf_structure_checking/html/biobb_wf_structure_checking.web.ipynb
 *.old.ipynb
 *.bk.ipynb
 .DS_Store
