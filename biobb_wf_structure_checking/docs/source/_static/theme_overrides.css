@@ -4,6 +4,7 @@ a:hover { color:#29b3b6; }
 a:visited { color:#9e8830; }
 
 .highlight { background: #fffae4; }
+.highlight pre { max-height: 500px; }
 
 /*.rst-content dl:not(.docutils) dt { background: #d5f0f1; color: #29b3b5; border-top: solid 3px #29b3b5; }*/
 html.writer-html4 .rst-content dl:not(.docutils)>dt, 

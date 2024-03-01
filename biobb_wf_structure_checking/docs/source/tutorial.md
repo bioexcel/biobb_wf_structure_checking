@@ -2643,7 +2643,7 @@ display(two_columns)
 ```
 
 
-<div style="width: 50%; float:left;">
+<div class="highlight" style="width: 50%; float:left;">
     <pre>{
       "FASTA": {
         "canonical": "",
@@ -3540,7 +3540,7 @@ display(two_columns)
       }
     }
     None</pre></div>
-  <div style="width: 49%; float:left; margin-left:1%;">
+  <div class="highlight" style="width: 49%; float:left; margin-left:1%;">
     <pre>{
       "FASTA": {
         "canonical": "",
