@@ -3,7 +3,7 @@
 <html lang="en">
 <head><meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>biobb_wf_structure_checking</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>biobb_wf_structure_checking.web</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <style type="text/css">
     pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -7331,10 +7331,12 @@ a.anchor-link {
     if (!diagrams.length) {
       return;
     }
-    const mermaid = (await import("https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.2.3/mermaid.esm.min.mjs")).default;
+    const mermaid = (await import("https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.7.0/mermaid.esm.min.mjs")).default;
+    const parser = new DOMParser();
 
     mermaid.initialize({
       maxTextSize: 100000,
+      maxEdges: 100000,
       startOnLoad: false,
       fontFamily: window
         .getComputedStyle(document.body)
@@ -7347,39 +7349,52 @@ a.anchor-link {
     let _nextMermaidId = 0;
 
     function makeMermaidImage(svg) {
-      const img = document.createElement('img');
-      const maxWidth = svg.match(/max-width: (\d+)/);
-      if (maxWidth && maxWidth[1]) {
-        const width = parseInt(maxWidth[1]);
-        if (width && !Number.isNaN(width) && Number.isFinite(width)) {
-          img.width = width;
-        }
+      const img = document.createElement("img");
+      const doc = parser.parseFromString(svg, "image/svg+xml");
+      const svgEl = doc.querySelector("svg");
+      const { maxWidth } = svgEl?.style || {};
+      const firstTitle = doc.querySelector("title");
+      const firstDesc = doc.querySelector("desc");
+
+      img.setAttribute("src", `data:image/svg+xml,${encodeURIComponent(svg)}`);
+      if (maxWidth) {
+        img.width = parseInt(maxWidth);
       }
-      img.setAttribute('src', `data:image/svg+xml,${encodeURIComponent(svg)}`);
-      return img;
+      if (firstTitle) {
+        img.setAttribute("alt", firstTitle.textContent);
+      }
+      if (firstDesc) {
+        const caption = document.createElement("figcaption");
+        caption.className = "sr-only";
+        caption.textContent = firstDesc.textContent;
+        return [img, caption];
+      }
+      return [img];
     }
 
     async function makeMermaidError(text) {
-      let errorMessage = '';
+      let errorMessage = "";
       try {
         await mermaid.parse(text);
       } catch (err) {
         errorMessage = `${err}`;
       }
 
-      const result = document.createElement('details');
-      const summary = document.createElement('summary');
-      const pre = document.createElement('pre');
-      const code = document.createElement('code');
+      const result = document.createElement("details");
+      result.className = 'jp-RenderedMermaid-Details';
+      const summary = document.createElement("summary");
+      summary.className = 'jp-RenderedMermaid-Summary';
+      const pre = document.createElement("pre");
+      const code = document.createElement("code");
       code.innerText = text;
       pre.appendChild(code);
       summary.appendChild(pre);
       result.appendChild(summary);
 
-      const warning = document.createElement('pre');
+      const warning = document.createElement("pre");
       warning.innerText = errorMessage;
       result.appendChild(warning);
-      return result;
+      return [result];
     }
 
     async function renderOneMarmaid(src) {
@@ -7389,30 +7404,74 @@ a.anchor-link {
       const el = document.createElement("div");
       el.style.visibility = "hidden";
       document.body.appendChild(el);
-      let result = null;
+      let results = null;
+      let output = null;
       try {
-        const { svg } = await mermaid.render(id, raw, el);
-        result = makeMermaidImage(svg);
+        let { svg } = await mermaid.render(id, raw, el);
+        svg = cleanMermaidSvg(svg);
+        results = makeMermaidImage(svg);
+        output = document.createElement("figure");
+        results.map(output.appendChild, output);
       } catch (err) {
         parent.classList.add("jp-mod-warning");
-        result = await makeMermaidError(raw);
+        results = await makeMermaidError(raw);
+        output = results[0];
       } finally {
         el.remove();
       }
       parent.classList.add("jp-RenderedMermaid");
-      parent.appendChild(result);
+      parent.appendChild(output);
+    }
+
+
+    /**
+     * Post-process to ensure mermaid diagrams contain only valid SVG and XHTML.
+     */
+    function cleanMermaidSvg(svg) {
+      return svg.replace(RE_VOID_ELEMENT, replaceVoidElement);
+    }
+
+
+    /**
+     * A regular expression for all void elements, which may include attributes and
+     * a slash.
+     *
+     * @see https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+     *
+     * Of these, only `<br>` is generated by Mermaid in place of `\n`,
+     * but _any_ "malformed" tag will break the SVG rendering entirely.
+     */
+    const RE_VOID_ELEMENT =
+      /<\s*(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)\s*([^>]*?)\s*>/gi;
+
+    /**
+     * Ensure a void element is closed with a slash, preserving any attributes.
+     */
+    function replaceVoidElement(match, tag, rest) {
+      rest = rest.trim();
+      if (!rest.endsWith('/')) {
+        rest = `${rest} /`;
+      }
+      return `<${tag} ${rest}>`;
     }
 
     void Promise.all([...diagrams].map(renderOneMarmaid));
   });
 </script>
 <style>
-  .jp-RenderedMarkdown .jp-Mermaid:not(.jp-RenderedMermaid) {
+  .jp-Mermaid:not(.jp-RenderedMermaid) {
     display: none;
   }
-  .jp-RenderedMarkdown .jp-RenderedMermaid.jp-mod-warning {
+
+  .jp-RenderedMermaid {
+    overflow: auto;
+    display: flex;
+  }
+
+  .jp-RenderedMermaid.jp-mod-warning {
     width: auto;
-    padding: 10px;
+    padding: 0.5em;
+    margin-top: 0.5em;
     border: var(--jp-border-width) solid var(--jp-warn-color2);
     border-radius: var(--jp-border-radius);
     color: var(--jp-ui-font-color1);
@@ -7420,17 +7479,32 @@ a.anchor-link {
     white-space: pre-wrap;
     word-wrap: break-word;
   }
-  .jp-RenderedMarkdown .jp-RenderedMermaid.jp-mod-warning details > pre {
+
+  .jp-RenderedMermaid figure {
+    margin: 0;
+    overflow: auto;
+    max-width: 100%;
+  }
+
+  .jp-RenderedMermaid img {
+    max-width: 100%;
+  }
+
+  .jp-RenderedMermaid-Details > pre {
     margin-top: 1em;
   }
-  .jp-RenderedMarkdown .jp-RenderedMermaid.jp-mod-warning summary {
+
+  .jp-RenderedMermaid-Summary {
     color: var(--jp-warn-color2);
   }
-  .jp-RenderedMarkdown .jp-RenderedMermaid.jp-mod-warning summary > pre {
-    display: inline-block;
-  }
-  .jp-RenderedMermaid > .mermaid {
+
+  .jp-RenderedMermaid:not(.jp-mod-warning) pre {
     display: none;
+  }
+
+  .jp-RenderedMermaid-Summary > pre {
+    display: inline-block;
+    white-space: normal;
   }
 </style>
 <!-- End of mermaid configuration --></head>
@@ -7469,13 +7543,12 @@ a.anchor-link {
 <li><a href="https://github.com/bioexcel/biobb_chemistry">biobb_chemistry</a>: Tools to perform chemoinformatics on molecular structures.</li>
 </ul>
 <h3 id="Auxiliar-libraries-used">Auxiliar libraries used<a class="anchor-link" href="#Auxiliar-libraries-used">¶</a></h3><ul>
-  <li><a href="https://salilab.org/modeller/">modeller</a>: Software used for homology or comparative modeling of protein three-dimensional structures.</li>
-  <li><a href="https://jupyter.org/">jupyter</a>: Free software, open standards, and web services for interactive computing across all programming languages.</li>
-  <li><a href="http://nglviewer.org/#nglview">nglview</a>: Jupyter/IPython widget to interactively view molecular structures and trajectories in notebooks.</li>
-  <li><a href="https://plot.ly/python/offline/">plotly</a>: Python interactive graphing library integrated in Jupyter notebooks.</li>
+<li><a href="https://salilab.org/modeller/">modeller</a>: Software used for homology or comparative modeling of protein three-dimensional structures.</li>
+<li><a href="https://jupyter.org/">jupyter</a>: Free software, open standards, and web services for interactive computing across all programming languages.</li>
+<li><a href="http://nglviewer.org/#nglview">nglview</a>: Jupyter/IPython widget to interactively view molecular structures and trajectories in notebooks.</li>
+<li><a href="https://plot.ly/python/offline/">plotly</a>: Python interactive graphing library integrated in Jupyter notebooks.</li>
 </ul>
-<h3 id="Conda-Installation-and-Launch">Conda Installation and Launch<a class="anchor-link" href="#Conda-Installation-and-Launch">¶</a></h3><div class="highlight"><pre>
-<span class="go">git clone https://github.com/bioexcel/biobb_wf_structure_checking.git</span>
+<h3 id="Conda-Installation-and-Launch">Conda Installation and Launch<a class="anchor-link" href="#Conda-Installation-and-Launch">¶</a></h3><div class="highlight"><pre><span></span><span class="go">git clone https://github.com/bioexcel/biobb_wf_structure_checking.git</span>
 <span class="go">cd biobb_wf_structure_checking</span>
 <span class="go">conda env create -f conda_env/environment.yml</span>
 <span class="go">conda activate biobb_wf_structure_checking</span>
@@ -7627,6 +7700,17 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><img alt="No description has been provided for this image" src="ngl1.png"/></p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><a id="PDBchecking"></a></p>
 <hr/>
 <h2 id="PDB-structure-checking">PDB structure checking<a class="anchor-link" href="#PDB-structure-checking">¶</a></h2><p>The first step of the workflow is a complete <strong>checking</strong> of the <strong>molecular structure</strong>. The <strong>BioBB</strong> utility <strong>structure_check</strong> parses the whole <strong>PDB file</strong>, runs a complete <strong>structure checking</strong>, saves <strong>useful information</strong> about the structure and looks for <strong>possible issues</strong>. The block is printing a <strong>report</strong> of the information extracted from the <strong>input structure</strong>.</p>
@@ -7674,12 +7758,12 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [33]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
@@ -7687,6 +7771,913 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
   <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{
+  "FASTA": {
+    "canonical": "",
+    "structure": "&gt;pdb_sq_A Frags: 0-194\nSMEEKLKKTNIIFVVGGPGSGKGTQCEKIVQKYGYTHLSTGDLLRSEVSSGSARGKKLSE\nIMEKGQLVPLETVLDMLRDAMVAKVNTSKGFLIDGYPREVQQGEEFERRIGQPTLLLYVD\nAGPETMTQRLLKRGETSGRVDDNEETIKKRLETYYKATEPVIAFYEKRGIVRKVNAEGSV\nDSVFSQVCTHLDALL\n&gt;pdb_sq_B Frags: 0-194\nSMEEKLKKTNIIFVVGGPGSGKGTQCEKIVQKYGYTHLSTGDLLRSEVSSGSARGKKLSE\nIMEKGQLVPLETVLDMLRDAMVAKVNTSKGFLIDGYPREVQQGEEFERRIGQPTLLLYVD\nAGPETMTQRLLKRGETSGRVDDNEETIKKRLETYYKATEPVIAFYEKRGIVRKVNAEGSV\nDSVFSQVCTHLDALL\n&gt;pdb_sq_C Frags: 0-194\nSMEEKLKKTNIIFVVGGPGSGKGTQCEKIVQKYGYTHLSTGDLLRSEVSSGSARGKKLSE\nIMEKGQLVPLETVLDMLRDAMVAKVNTSKGFLIDGYPREVQQGEEFERRIGQPTLLLYVD\nAGPETMTQRLLKRGETSGRVDDNEETIKKRLETYYKATEPVIAFYEKRGIVRKVNAEGSV\nDSVFSQVCTHLDALL\n"
+  },
+  "add_hydrogen": {
+    "ionic_detected": [
+      "GLU A2",
+      "GLU A3",
+      "LYS A4",
+      "LYS A6",
+      "LYS A7",
+      "LYS A21",
+      "CYS A25",
+      "GLU A26",
+      "LYS A27",
+      "LYS A31",
+      "TYR A32",
+      "TYR A34",
+      "HIS A36",
+      "ASP A41",
+      "ARG A44",
+      "GLU A46",
+      "ARG A53",
+      "LYS A55",
+      "LYS A56",
+      "GLU A59",
+      "GLU A62",
+      "LYS A63",
+      "GLU A70",
+      "ASP A74",
+      "ARG A77",
+      "ASP A78",
+      "LYS A83",
+      "LYS A88",
+      "ASP A93",
+      "TYR A95",
+      "ARG A97",
+      "GLU A98",
+      "GLU A103",
+      "GLU A104",
+      "GLU A106",
+      "ARG A107",
+      "ARG A108",
+      "TYR A117",
+      "ASP A119",
+      "GLU A123",
+      "ARG A128",
+      "LYS A131",
+      "ARG A132",
+      "GLU A134",
+      "ARG A138",
+      "ASP A140",
+      "ASP A141",
+      "GLU A143",
+      "GLU A144",
+      "LYS A147",
+      "LYS A148",
+      "ARG A149",
+      "GLU A151",
+      "TYR A153",
+      "TYR A154",
+      "LYS A155",
+      "GLU A158",
+      "TYR A164",
+      "GLU A165",
+      "LYS A166",
+      "ARG A167",
+      "ARG A171",
+      "LYS A172",
+      "GLU A176",
+      "ASP A180",
+      "CYS A187",
+      "HIS A189",
+      "ASP A191",
+      "GLU B2",
+      "GLU B3",
+      "LYS B4",
+      "LYS B6",
+      "LYS B7",
+      "LYS B21",
+      "CYS B25",
+      "GLU B26",
+      "LYS B27",
+      "LYS B31",
+      "TYR B32",
+      "TYR B34",
+      "HIS B36",
+      "ASP B41",
+      "ARG B44",
+      "GLU B46",
+      "ARG B53",
+      "LYS B55",
+      "LYS B56",
+      "GLU B59",
+      "GLU B62",
+      "LYS B63",
+      "GLU B70",
+      "ASP B74",
+      "ARG B77",
+      "ASP B78",
+      "LYS B83",
+      "LYS B88",
+      "ASP B93",
+      "TYR B95",
+      "ARG B97",
+      "GLU B98",
+      "GLU B103",
+      "GLU B104",
+      "GLU B106",
+      "ARG B107",
+      "ARG B108",
+      "TYR B117",
+      "ASP B119",
+      "GLU B123",
+      "ARG B128",
+      "LYS B131",
+      "ARG B132",
+      "GLU B134",
+      "ARG B138",
+      "ASP B140",
+      "ASP B141",
+      "GLU B143",
+      "GLU B144",
+      "LYS B147",
+      "LYS B148",
+      "ARG B149",
+      "GLU B151",
+      "TYR B153",
+      "TYR B154",
+      "LYS B155",
+      "GLU B158",
+      "TYR B164",
+      "GLU B165",
+      "LYS B166",
+      "ARG B167",
+      "ARG B171",
+      "LYS B172",
+      "GLU B176",
+      "ASP B180",
+      "CYS B187",
+      "HIS B189",
+      "ASP B191",
+      "GLU C2",
+      "GLU C3",
+      "LYS C4",
+      "LYS C6",
+      "LYS C7",
+      "LYS C21",
+      "CYS C25",
+      "GLU C26",
+      "LYS C27",
+      "LYS C31",
+      "TYR C32",
+      "TYR C34",
+      "HIS C36",
+      "ASP C41",
+      "ARG C44",
+      "GLU C46",
+      "ARG C53",
+      "LYS C55",
+      "LYS C56",
+      "GLU C59",
+      "GLU C62",
+      "LYS C63",
+      "GLU C70",
+      "ASP C74",
+      "ARG C77",
+      "ASP C78",
+      "LYS C83",
+      "LYS C88",
+      "ASP C93",
+      "TYR C95",
+      "ARG C97",
+      "GLU C98",
+      "GLU C103",
+      "GLU C104",
+      "GLU C106",
+      "ARG C107",
+      "ARG C108",
+      "TYR C117",
+      "ASP C119",
+      "GLU C123",
+      "ARG C128",
+      "LYS C131",
+      "ARG C132",
+      "GLU C134",
+      "ARG C138",
+      "ASP C140",
+      "ASP C141",
+      "GLU C143",
+      "GLU C144",
+      "LYS C147",
+      "LYS C148",
+      "ARG C149",
+      "GLU C151",
+      "TYR C153",
+      "TYR C154",
+      "LYS C155",
+      "GLU C158",
+      "TYR C164",
+      "GLU C165",
+      "LYS C166",
+      "ARG C167",
+      "ARG C171",
+      "LYS C172",
+      "GLU C176",
+      "ASP C180",
+      "CYS C187",
+      "HIS C189",
+      "ASP C191"
+    ]
+  },
+  "altloc": {
+    "ASN A85": {
+      "CA": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "CB": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "CG": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "ND2": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "OD1": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ]
+    },
+    "GLU B165": {
+      "CA": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "CB": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "CD": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "CG": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "OE1": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "OE2": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ]
+    },
+    "GLU C143": {
+      "CA": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "CB": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "CD": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "CG": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "OE1": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "OE2": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ]
+    },
+    "SER A45": {
+      "CA": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "CB": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "OG": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ]
+    },
+    "VAL A67": {
+      "CA": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "CB": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "CG1": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ],
+      "CG2": [
+        {
+          "loc_label": "A",
+          "occupancy": 0.5
+        },
+        {
+          "loc_label": "B",
+          "occupancy": 0.5
+        }
+      ]
+    }
+  },
+  "amide": {
+    "n_amides": 36
+  },
+  "backbone": {
+    "missing_atoms": {
+      "LEU A194": [
+        "OXT"
+      ],
+      "LEU B194": [
+        "OXT"
+      ],
+      "LEU C194": [
+        "OXT"
+      ]
+    }
+  },
+  "chains": {
+    "A": "Protein/0",
+    "B": "Protein/0",
+    "C": "Protein/0",
+    "unlabelled": false
+  },
+  "chiral": {
+    "n_chirals": 69
+  },
+  "chiral_bck": {
+    "n_chirals": 528
+  },
+  "cistransbck": {
+    "cis": [
+      [
+        "TYR A95",
+        "PRO A96",
+        2.032
+      ],
+      [
+        "TYR B95",
+        "PRO B96",
+        -3.952
+      ],
+      [
+        "TYR C95",
+        "PRO C96",
+        3.605
+      ],
+      [
+        "SER C136",
+        "GLY C137",
+        1.028
+      ]
+    ]
+  },
+  "clashes": {
+    "detected": {
+      "apolar": [
+        {
+          "at1": "GLU A46.OE1",
+          "at2": "MET A75.CE",
+          "dist": 2.651
+        },
+        {
+          "at1": "ARG A53.O",
+          "at2": "LYS A56.CG",
+          "dist": 2.7251
+        },
+        {
+          "at1": "GLU A123.O",
+          "at2": "GLN A127.CG",
+          "dist": 2.8177
+        },
+        {
+          "at1": "GLU B70.CD",
+          "at2": " ZN B642.ZN",
+          "dist": 2.893
+        },
+        {
+          "at1": "ASP C74.CG",
+          "at2": " ZN C645.ZN",
+          "dist": 2.7006
+        }
+      ],
+      "negative": [
+        {
+          "at1": "GLU A70.OE2",
+          "at2": "ASP A74.OD2",
+          "dist": 3.3062
+        },
+        {
+          "at1": "GLU A70.OE2",
+          "at2": "GLU B70.OE1",
+          "dist": 3.4246
+        },
+        {
+          "at1": "GLU A70.OE2",
+          "at2": "GLU B104.OE1",
+          "dist": 3.4053
+        },
+        {
+          "at1": "ASP A74.OD1",
+          "at2": "GLU B70.OE2",
+          "dist": 3.1557
+        },
+        {
+          "at1": "ASP A74.OD2",
+          "at2": "GLU B104.OE1",
+          "dist": 3.0494
+        },
+        {
+          "at1": "GLU C70.OE2",
+          "at2": "ASP C74.OD1",
+          "dist": 3.2633
+        }
+      ],
+      "polar_acceptor": [
+        {
+          "at1": "GLU A2.OE2",
+          "at2": "ILE A109.O",
+          "dist": 2.5821
+        },
+        {
+          "at1": "SER A58.O",
+          "at2": "GLU A62.OE2",
+          "dist": 2.9717
+        },
+        {
+          "at1": "ASP A74.OD2",
+          "at2": "GLU B104.OE1",
+          "dist": 3.0494
+        }
+      ],
+      "polar_donor": [],
+      "positive": [
+        {
+          "at1": "ARG A44.NH1",
+          "at2": "ARG A138.NH1",
+          "dist": 3.4254
+        },
+        {
+          "at1": "ARG A132.NH2",
+          "at2": "ARG A138.NE",
+          "dist": 3.3889
+        },
+        {
+          "at1": "LYS B6.NZ",
+          "at2": "ARG C171.NH2",
+          "dist": 3.439
+        },
+        {
+          "at1": "ARG B44.NH1",
+          "at2": "ARG B138.NH1",
+          "dist": 3.2688
+        },
+        {
+          "at1": "ARG B138.NH2",
+          "at2": "ARG B149.NH2",
+          "dist": 3.3051
+        },
+        {
+          "at1": "ARG C44.NH1",
+          "at2": "ARG C138.NH1",
+          "dist": 3.3648
+        },
+        {
+          "at1": "ARG C132.NH2",
+          "at2": "ARG C138.NH1",
+          "dist": 3.3057
+        },
+        {
+          "at1": "ARG C138.NH2",
+          "at2": "ARG C149.NH2",
+          "dist": 3.3646
+        }
+      ],
+      "severe": []
+    }
+  },
+  "fixside": {
+    "detected_missing": {
+      "ARG C53": [
+        "CD",
+        "NE",
+        "CZ",
+        "NH1",
+        "NH2"
+      ],
+      "GLN A127": [
+        "CD",
+        "OE1",
+        "NE2"
+      ],
+      "GLN B100": [
+        "CG",
+        "CD",
+        "OE1",
+        "NE2"
+      ],
+      "GLN B127": [
+        "CD",
+        "OE1",
+        "NE2"
+      ],
+      "GLN C127": [
+        "CD",
+        "OE1",
+        "NE2"
+      ],
+      "GLU A123": [
+        "CD",
+        "OE1",
+        "OE2"
+      ],
+      "GLU A143": [
+        "CD",
+        "OE1",
+        "OE2"
+      ],
+      "GLU B123": [
+        "CG",
+        "CD",
+        "OE1",
+        "OE2"
+      ],
+      "GLU B151": [
+        "CD",
+        "OE1",
+        "OE2"
+      ],
+      "GLU B3": [
+        "OE1",
+        "OE2"
+      ],
+      "GLU C123": [
+        "CD",
+        "OE1",
+        "OE2"
+      ],
+      "GLU C134": [
+        "CD",
+        "OE1",
+        "OE2"
+      ],
+      "GLU C2": [
+        "CD",
+        "OE1",
+        "OE2"
+      ],
+      "GLU C59": [
+        "CD",
+        "OE1",
+        "OE2"
+      ],
+      "LEU B193": [
+        "CD1",
+        "CD2"
+      ],
+      "LEU C193": [
+        "CG",
+        "CD1",
+        "CD2"
+      ],
+      "LYS A155": [
+        "CE",
+        "NZ"
+      ],
+      "LYS A56": [
+        "CD",
+        "CE",
+        "NZ"
+      ],
+      "LYS A63": [
+        "CD",
+        "CE",
+        "NZ"
+      ],
+      "LYS A7": [
+        "CE",
+        "NZ"
+      ],
+      "LYS B131": [
+        "CD",
+        "CE",
+        "NZ"
+      ],
+      "LYS B155": [
+        "CE",
+        "NZ"
+      ],
+      "LYS B166": [
+        "CE",
+        "NZ"
+      ],
+      "LYS B55": [
+        "CD",
+        "CE",
+        "NZ"
+      ],
+      "LYS B56": [
+        "CD",
+        "CE",
+        "NZ"
+      ],
+      "LYS B7": [
+        "CD",
+        "CE",
+        "NZ"
+      ],
+      "LYS C131": [
+        "CD",
+        "CE",
+        "NZ"
+      ],
+      "LYS C55": [
+        "CE",
+        "NZ"
+      ],
+      "LYS C56": [
+        "CE",
+        "NZ"
+      ],
+      "LYS C7": [
+        "CE",
+        "NZ"
+      ],
+      "LYS C83": [
+        "CE",
+        "NZ"
+      ],
+      "LYS C88": [
+        "CE",
+        "NZ"
+      ]
+    }
+  },
+  "getss": {},
+  "headers": {
+    "entry_id": "",
+    "method": "unknown",
+    "resolution": "N.A.",
+    "title": ""
+  },
+  "inscodes": {},
+  "ligands": {
+    "detected": [
+      " ZN A601",
+      " ZN A641",
+      "SO4 A702",
+      "AP5 A631",
+      " ZN B611",
+      " ZN B642",
+      " ZN B643",
+      "SO4 B701",
+      "SO4 B703",
+      "AP5 B632",
+      " ZN C621",
+      " ZN C644",
+      " ZN C645",
+      "AP5 C633"
+    ]
+  },
+  "loaded_structure": "/Users/gbayarri/projects/BioBB/tutorials/biobb_wf_structure_checking/biobb_wf_structure_checking/notebooks/ff4482b7-13f1-4a56-a2f1-3698589289d2/1z83.pdb",
+  "metals": {
+    "detected": [
+      " ZN A601",
+      " ZN A641",
+      " ZN B611",
+      " ZN B642",
+      " ZN B643",
+      " ZN C621",
+      " ZN C644",
+      " ZN C645"
+    ]
+  },
+  "models": {
+    "nmodels": 1
+  },
+  "rem_hydrogen": {},
+  "sequences": {},
+  "stats": {
+    "biounit": false,
+    "ca_only": false,
+    "chain_guess_details": [
+      {
+        "A": {
+          "DNA": 0.0,
+          "Other": 0.02010050251256279,
+          "Protein": 0.9798994974874372,
+          "RNA": 0.0
+        },
+        "B": {
+          "DNA": 0.0,
+          "Other": 0.02985074626865669,
+          "Protein": 0.9701492537313433,
+          "RNA": 0.0
+        },
+        "C": {
+          "DNA": 0.0,
+          "Other": 0.02010050251256279,
+          "Protein": 0.9798994974874372,
+          "RNA": 0.0
+        }
+      }
+    ],
+    "chain_ids": [
+      {
+        "A": "Protein",
+        "B": "Protein",
+        "C": "Protein"
+      }
+    ],
+    "models_type": 0,
+    "nchains": [
+      3
+    ],
+    "nmodels": 1,
+    "stats": {
+      "num_ats": 5123,
+      "num_h": 0,
+      "num_res": 1057,
+      "num_wat": 458,
+      "res_h": 0,
+      "res_hetats": 472,
+      "res_insc": 0,
+      "res_ligands": 14
+    },
+    "total_charge": null
+  },
+  "water": {
+    "n_detected": 458
+  }
+}
+</pre>
 </div>
 </div>
 </div>
@@ -7709,16 +8700,31 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'models'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{
+  "nmodels": 1
+}
+</pre>
 </div>
 </div>
 </div>
@@ -7775,6 +8781,17 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><img alt="No description has been provided for this image" src="ngl2.png"/></p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><a id="chains"></a></p>
 <h2 id="Chains">Chains<a class="anchor-link" href="#Chains">¶</a></h2><p>Presence of <strong>chains</strong> in the structure. MD simulations are usually performed with complete structures. However input structure may contain <strong>several copies of the system</strong>, or contain <strong>additional chains</strong> like <strong>peptides</strong> or <strong>nucleic acids</strong> that may be removed.</p>
 <hr/>
@@ -7786,16 +8803,34 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'chains'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{
+  "A": "Protein/0",
+  "B": "Protein/0",
+  "C": "Protein/0",
+  "unlabelled": false
+}
+</pre>
 </div>
 </div>
 </div>
@@ -7856,6 +8891,17 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><img alt="No description has been provided for this image" src="ngl3.png"/></p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><a id="altlocs"></a></p>
 <h2 id="Alternative-Locations">Alternative Locations<a class="anchor-link" href="#Alternative-Locations">¶</a></h2><p>Presence of residues with <strong>alternative locations</strong>. Atoms with <strong>alternative coordinates</strong> and their <strong>occupancy</strong> are reported. MD simulations requires a <strong>single position</strong> for each atom.</p>
 <hr/>
@@ -7867,16 +8913,280 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'altloc'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{
+  "ASN A85": {
+    "CA": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "CB": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "CG": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "ND2": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "OD1": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ]
+  },
+  "GLU B165": {
+    "CA": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "CB": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "CD": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "CG": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "OE1": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "OE2": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ]
+  },
+  "GLU C143": {
+    "CA": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "CB": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "CD": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "CG": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "OE1": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "OE2": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ]
+  },
+  "SER A45": {
+    "CA": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "CB": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "OG": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ]
+  },
+  "VAL A67": {
+    "CA": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "CB": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "CG1": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ],
+    "CG2": [
+      {
+        "loc_label": "A",
+        "occupancy": 0.5
+      },
+      {
+        "loc_label": "B",
+        "occupancy": 0.5
+      }
+    ]
+  }
+}
+</pre>
 </div>
 </div>
 </div>
@@ -7940,6 +9250,17 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><img alt="No description has been provided for this image" src="ngl4.png"/></p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><a id="ss"></a></p>
 <h2 id="Disulfide-Bridges">Disulfide Bridges<a class="anchor-link" href="#Disulfide-Bridges">¶</a></h2><p>Presence of <strong>disulfide bridges</strong> (-S-S- bonds) based on distance criteria. <strong>Disulfide bonds</strong> are crucial for the <strong>structure stability</strong>, and MD simulations require those bonds to be correctly set. Most of the <strong>MD packages</strong> come with tools able to automatically identify -S-S- bonds and include them in the <strong>system topology</strong> parameters, but some of them need the residues involved in the bond to be <strong>explicitly marked</strong> (e.g. AMBER CYX residues).</p>
 <hr/>
@@ -7951,16 +9272,29 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'getss'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{}
+</pre>
 </div>
 </div>
 </div>
@@ -8019,6 +9353,17 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><img alt="No description has been provided for this image" src="ngl5.png"/></p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><a id="metals"></a></p>
 <h2 id="Metal-Ions">Metal Ions<a class="anchor-link" href="#Metal-Ions">¶</a></h2><p>Presence of heteroatoms being <strong>metal ions</strong>. Only structural <strong>metal ions</strong> should be kept in MD simulations, as they require special <strong>force field parameters</strong>. In some cases, the <strong>atomic coordination</strong> between the <strong>protein atoms</strong> and the <strong>metal ions</strong> should be also specified.</p>
 <hr/>
@@ -8030,16 +9375,40 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'metals'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{
+  "detected": [
+    " ZN A601",
+    " ZN A641",
+    " ZN B611",
+    " ZN B642",
+    " ZN B643",
+    " ZN C621",
+    " ZN C644",
+    " ZN C645"
+  ]
+}
+</pre>
 </div>
 </div>
 </div>
@@ -8104,6 +9473,17 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><img alt="No description has been provided for this image" src="ngl6.png"/></p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><a id="ligands"></a></p>
 <h2 id="Ligands">Ligands<a class="anchor-link" href="#Ligands">¶</a></h2><p>Presence of heteroatoms being <strong>ligands</strong>. Only important <strong>ligands</strong> should be kept in MD simulations, as they require special <strong>force field parameters</strong>.</p>
 <hr/>
@@ -8115,16 +9495,46 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [21]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'ligands'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{
+  "detected": [
+    " ZN A601",
+    " ZN A641",
+    "SO4 A702",
+    "AP5 A631",
+    " ZN B611",
+    " ZN B642",
+    " ZN B643",
+    "SO4 B701",
+    "SO4 B703",
+    "AP5 B632",
+    " ZN C621",
+    " ZN C644",
+    " ZN C645",
+    "AP5 C633"
+  ]
+}
+</pre>
 </div>
 </div>
 </div>
@@ -8189,6 +9599,17 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><img alt="No description has been provided for this image" src="ngl7.png"/></p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><a id="hydrogens"></a></p>
 <h2 id="Hydrogen-atoms">Hydrogen atoms<a class="anchor-link" href="#Hydrogen-atoms">¶</a></h2><p>Presence of <strong>hydrogen atoms</strong>. MD setup can be done with the original <strong>hydrogen atoms</strong>, however to prevent possible problems coming from non <strong>standard labelling</strong>, removing them is safer.</p>
 <hr/>
@@ -8200,16 +9621,38 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [24]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'stats'</span><span class="p">][</span><span class="s1">'stats'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{
+  "num_ats": 5123,
+  "num_h": 0,
+  "num_res": 1057,
+  "num_wat": 458,
+  "res_h": 0,
+  "res_hetats": 472,
+  "res_insc": 0,
+  "res_ligands": 14
+}
+</pre>
 </div>
 </div>
 </div>
@@ -8267,6 +9710,17 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><img alt="No description has been provided for this image" src="ngl8.png"/></p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><a id="water"></a></p>
 <h2 id="Water-molecules">Water molecules<a class="anchor-link" href="#Water-molecules">¶</a></h2><p>Presence of <strong>water molecules</strong>. <strong>Crystallographic water molecules</strong> may be relevant for keeping the structure stable, however in most cases only some of them are required. These can be later added using other methods.</p>
 <hr/>
@@ -8278,16 +9732,38 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [27]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'stats'</span><span class="p">][</span><span class="s1">'stats'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{
+  "num_ats": 5123,
+  "num_h": 0,
+  "num_res": 1057,
+  "num_wat": 458,
+  "res_h": 0,
+  "res_hetats": 472,
+  "res_insc": 0,
+  "res_ligands": 14
+}
+</pre>
 </div>
 </div>
 </div>
@@ -8343,6 +9819,17 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><img alt="No description has been provided for this image" src="ngl9.png"/></p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><a id="amide"></a></p>
 <h2 id="Amide-groups">Amide groups<a class="anchor-link" href="#Amide-groups">¶</a></h2><p>Presence of incorrect <strong>amide groups</strong>. <strong>Amide terminal atoms</strong> in <em><strong>Asparagines</strong></em> and <em><strong>Glutamines</strong></em> residues can be labelled incorrectly, with swapped <strong>Nitrogen</strong> and <strong>Oxygen</strong> atoms from the <strong>amide group</strong>.</p>
 <hr/>
@@ -8354,16 +9841,31 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [30]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'amide'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{
+  "n_amides": 36
+}
+</pre>
 </div>
 </div>
 </div>
@@ -8421,6 +9923,17 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><img alt="No description has been provided for this image" src="ngl10.png"/></p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><a id="chirality"></a></p>
 <h2 id="Chirality">Chirality<a class="anchor-link" href="#Chirality">¶</a></h2><p>Presence of incorrect <strong>chiralities</strong>. Side chains of <em><strong>Threonine</strong></em> and <em><strong>Isoleucine</strong></em> residues are <strong>chiral</strong>. <br/> <strong>Incorrect atom labelling</strong> can lead to the <strong>wrong chirality</strong>.</p>
 <hr/>
@@ -8432,16 +9945,31 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [33]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'chiral'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{
+  "n_chirals": 69
+}
+</pre>
 </div>
 </div>
 </div>
@@ -8497,6 +10025,17 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><img alt="No description has been provided for this image" src="ngl11.png"/></p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><a id="sidechains"></a></p>
 <h2 id="Side-Chains">Side Chains<a class="anchor-link" href="#Side-Chains">¶</a></h2><p>Presence of <strong>missing protein side chain atoms</strong>. MD programs only work with complete residues; some of the MD packages come with tools able to <strong>model missing side chain atoms</strong>, but not all of them.</p>
 <hr/>
@@ -8508,16 +10047,185 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [36]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'fixside'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{
+  "detected_missing": {
+    "ARG C53": [
+      "CD",
+      "NE",
+      "CZ",
+      "NH1",
+      "NH2"
+    ],
+    "GLN A127": [
+      "CD",
+      "OE1",
+      "NE2"
+    ],
+    "GLN B100": [
+      "CG",
+      "CD",
+      "OE1",
+      "NE2"
+    ],
+    "GLN B127": [
+      "CD",
+      "OE1",
+      "NE2"
+    ],
+    "GLN C127": [
+      "CD",
+      "OE1",
+      "NE2"
+    ],
+    "GLU A123": [
+      "CD",
+      "OE1",
+      "OE2"
+    ],
+    "GLU A143": [
+      "CD",
+      "OE1",
+      "OE2"
+    ],
+    "GLU B123": [
+      "CG",
+      "CD",
+      "OE1",
+      "OE2"
+    ],
+    "GLU B151": [
+      "CD",
+      "OE1",
+      "OE2"
+    ],
+    "GLU B3": [
+      "OE1",
+      "OE2"
+    ],
+    "GLU C123": [
+      "CD",
+      "OE1",
+      "OE2"
+    ],
+    "GLU C134": [
+      "CD",
+      "OE1",
+      "OE2"
+    ],
+    "GLU C2": [
+      "CD",
+      "OE1",
+      "OE2"
+    ],
+    "GLU C59": [
+      "CD",
+      "OE1",
+      "OE2"
+    ],
+    "LEU B193": [
+      "CD1",
+      "CD2"
+    ],
+    "LEU C193": [
+      "CG",
+      "CD1",
+      "CD2"
+    ],
+    "LYS A155": [
+      "CE",
+      "NZ"
+    ],
+    "LYS A56": [
+      "CD",
+      "CE",
+      "NZ"
+    ],
+    "LYS A63": [
+      "CD",
+      "CE",
+      "NZ"
+    ],
+    "LYS A7": [
+      "CE",
+      "NZ"
+    ],
+    "LYS B131": [
+      "CD",
+      "CE",
+      "NZ"
+    ],
+    "LYS B155": [
+      "CE",
+      "NZ"
+    ],
+    "LYS B166": [
+      "CE",
+      "NZ"
+    ],
+    "LYS B55": [
+      "CD",
+      "CE",
+      "NZ"
+    ],
+    "LYS B56": [
+      "CD",
+      "CE",
+      "NZ"
+    ],
+    "LYS B7": [
+      "CD",
+      "CE",
+      "NZ"
+    ],
+    "LYS C131": [
+      "CD",
+      "CE",
+      "NZ"
+    ],
+    "LYS C55": [
+      "CE",
+      "NZ"
+    ],
+    "LYS C56": [
+      "CE",
+      "NZ"
+    ],
+    "LYS C7": [
+      "CE",
+      "NZ"
+    ],
+    "LYS C83": [
+      "CE",
+      "NZ"
+    ],
+    "LYS C88": [
+      "CE",
+      "NZ"
+    ]
+  }
+}
+</pre>
 </div>
 </div>
 </div>
@@ -8575,6 +10283,17 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><img alt="No description has been provided for this image" src="ngl12.png"/></p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><a id="backbone"></a></p>
 <h2 id="Backbone">Backbone<a class="anchor-link" href="#Backbone">¶</a></h2><p>Presence of <strong>missing backbone atoms</strong>. <strong>PDB files</strong> can have <strong>missing backbone atoms</strong>, usually placed in <strong>flexible regions</strong> of the molecule. <strong>MD programs</strong> work with amino acid libraries that need all atoms to be present. Some MD packages tools are able to model <strong>side chain missing atoms</strong>, but they are rarely capable of modeling <strong>backbone atoms</strong>.</p>
 <hr/>
@@ -8591,16 +10310,41 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [39]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'backbone'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{
+  "missing_atoms": {
+    "LEU A194": [
+      "OXT"
+    ],
+    "LEU B194": [
+      "OXT"
+    ],
+    "LEU C194": [
+      "OXT"
+    ]
+  }
+}
+</pre>
 </div>
 </div>
 </div>
@@ -8707,6 +10451,17 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><img alt="No description has been provided for this image" src="ngl13.png"/></p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><a id="clashes"></a></p>
 <h2 id="Atomic-Clashes">Atomic Clashes<a class="anchor-link" href="#Atomic-Clashes">¶</a></h2><p>Presence of <strong>atomic clashes</strong>. Atoms that are <strong>too close in space</strong> can have a problem of <strong>energetic repulsion</strong>. Most clashes come from <strong>over-compactation</strong> of crystal structures and are naturally corrected on <strong>system setup</strong> or <strong>MD equilibration</strong>, but may lead to a significant <strong>distortion</strong> of the structure. <strong>Clashes</strong> are detected based on <strong>distance criteria</strong> and are classified in different groups, depending on the <strong>atom types</strong> involved:</p>
 <ul>
@@ -8725,16 +10480,152 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [44]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'clashes'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{
+  "detected": {
+    "apolar": [
+      {
+        "at1": "GLU A46.OE1",
+        "at2": "MET A75.CE",
+        "dist": 2.651
+      },
+      {
+        "at1": "ARG A53.O",
+        "at2": "LYS A56.CG",
+        "dist": 2.7251
+      },
+      {
+        "at1": "GLU A123.O",
+        "at2": "GLN A127.CG",
+        "dist": 2.8177
+      },
+      {
+        "at1": "GLU B70.CD",
+        "at2": " ZN B642.ZN",
+        "dist": 2.893
+      },
+      {
+        "at1": "ASP C74.CG",
+        "at2": " ZN C645.ZN",
+        "dist": 2.7006
+      }
+    ],
+    "negative": [
+      {
+        "at1": "GLU A70.OE2",
+        "at2": "ASP A74.OD2",
+        "dist": 3.3062
+      },
+      {
+        "at1": "GLU A70.OE2",
+        "at2": "GLU B70.OE1",
+        "dist": 3.4246
+      },
+      {
+        "at1": "GLU A70.OE2",
+        "at2": "GLU B104.OE1",
+        "dist": 3.4053
+      },
+      {
+        "at1": "ASP A74.OD1",
+        "at2": "GLU B70.OE2",
+        "dist": 3.1557
+      },
+      {
+        "at1": "ASP A74.OD2",
+        "at2": "GLU B104.OE1",
+        "dist": 3.0494
+      },
+      {
+        "at1": "GLU C70.OE2",
+        "at2": "ASP C74.OD1",
+        "dist": 3.2633
+      }
+    ],
+    "polar_acceptor": [
+      {
+        "at1": "GLU A2.OE2",
+        "at2": "ILE A109.O",
+        "dist": 2.5821
+      },
+      {
+        "at1": "SER A58.O",
+        "at2": "GLU A62.OE2",
+        "dist": 2.9717
+      },
+      {
+        "at1": "ASP A74.OD2",
+        "at2": "GLU B104.OE1",
+        "dist": 3.0494
+      }
+    ],
+    "polar_donor": [],
+    "positive": [
+      {
+        "at1": "ARG A44.NH1",
+        "at2": "ARG A138.NH1",
+        "dist": 3.4254
+      },
+      {
+        "at1": "ARG A132.NH2",
+        "at2": "ARG A138.NE",
+        "dist": 3.3889
+      },
+      {
+        "at1": "LYS B6.NZ",
+        "at2": "ARG C171.NH2",
+        "dist": 3.439
+      },
+      {
+        "at1": "ARG B44.NH1",
+        "at2": "ARG B138.NH1",
+        "dist": 3.2688
+      },
+      {
+        "at1": "ARG B138.NH2",
+        "at2": "ARG B149.NH2",
+        "dist": 3.3051
+      },
+      {
+        "at1": "ARG C44.NH1",
+        "at2": "ARG C138.NH1",
+        "dist": 3.3648
+      },
+      {
+        "at1": "ARG C132.NH2",
+        "at2": "ARG C138.NH1",
+        "dist": 3.3057
+      },
+      {
+        "at1": "ARG C138.NH2",
+        "at2": "ARG C149.NH2",
+        "dist": 3.3646
+      }
+    ],
+    "severe": []
+  }
+}
+</pre>
 </div>
 </div>
 </div>
@@ -8862,6 +10753,17 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><img alt="No description has been provided for this image" src="ngl14.png"/></p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><a id="fix_pdb"></a></p>
 <h2 id="Fix-PDB">Fix PDB<a class="anchor-link" href="#Fix-PDB">¶</a></h2><p>Information included in the <strong>original structure</strong> is sometimes <strong>lost</strong> during the <strong>preparation process</strong>. Typical examples are the <strong>residue numeration</strong> and the <strong>structure chains</strong>, that are <strong>changed</strong> or even <strong>removed</strong> by some <strong>MD tools</strong> (as happened with the chains in the previous <strong>energy minimization</strong> process). The <strong>fix_pdb</strong> building block renumerates the residues in a <strong>PDB structure</strong> according to reference <strong>sequences from UniProt</strong> and assigns <strong>chain ids</strong> accordingly.</p>
 <hr/>
@@ -8933,12 +10835,12 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [31]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
@@ -8946,6 +10848,194 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
   <span class="n">data_final</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data_final</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{
+  "FASTA": {
+    "canonical": "",
+    "structure": "&gt;pdb_sq_A Frags: 1-195\nSMEEKLKKTNIIFVVGGPGSGKGTQCEKIVQKYGYTHLSTGDLLRSEVSSGSARGKKLSE\nIMEKGQLVPLETVLDMLRDAMVAKVNTSKGFLIDGYPREVQQGEEFERRIGQPTLLLYVD\nAGPETMTQRLLKRGETSGRVDDNEETIKKRLETYYKATEPVIAFYEKRGIVRKVNAEGSV\nDSVFSQVCTHLDALL\n"
+  },
+  "add_hydrogen": {
+    "ionic_detected": [
+      "GLU A3",
+      "GLU A4",
+      "LYS A5",
+      "LYS A7",
+      "LYS A8",
+      "LYS A22",
+      "CYS A26",
+      "GLU A27",
+      "LYS A28",
+      "LYS A32",
+      "TYR A33",
+      "TYR A35",
+      "ASP A42",
+      "ARG A45",
+      "GLU A47",
+      "ARG A54",
+      "LYS A56",
+      "LYS A57",
+      "GLU A60",
+      "GLU A63",
+      "LYS A64",
+      "GLU A71",
+      "ASP A75",
+      "ARG A78",
+      "ASP A79",
+      "LYS A84",
+      "LYS A89",
+      "ASP A94",
+      "TYR A96",
+      "ARG A98",
+      "GLU A99",
+      "GLU A104",
+      "GLU A105",
+      "GLU A107",
+      "ARG A108",
+      "ARG A109",
+      "TYR A118",
+      "ASP A120",
+      "GLU A124",
+      "ARG A129",
+      "LYS A132",
+      "ARG A133",
+      "GLU A135",
+      "ARG A139",
+      "ASP A141",
+      "ASP A142",
+      "GLU A144",
+      "GLU A145",
+      "LYS A148",
+      "LYS A149",
+      "ARG A150",
+      "GLU A152",
+      "TYR A154",
+      "TYR A155",
+      "LYS A156",
+      "GLU A159",
+      "TYR A165",
+      "GLU A166",
+      "LYS A167",
+      "ARG A168",
+      "ARG A172",
+      "LYS A173",
+      "GLU A177",
+      "ASP A181",
+      "CYS A188",
+      "ASP A192"
+    ]
+  },
+  "altloc": {},
+  "amide": {
+    "n_amides": 12
+  },
+  "backbone": {},
+  "chains": {
+    "A": "Protein/0",
+    "unlabelled": false
+  },
+  "chiral": {
+    "n_chirals": 23
+  },
+  "chiral_bck": {
+    "n_chirals": 176
+  },
+  "cistransbck": {
+    "cis": [
+      [
+        "TYR A96",
+        "PRO A97",
+        -10.786
+      ]
+    ]
+  },
+  "clashes": {
+    "detected": {
+      "apolar": [],
+      "negative": [],
+      "polar_acceptor": [],
+      "polar_donor": [],
+      "positive": [
+        {
+          "at1": "ARG A45.NH2",
+          "at2": "ARG A139.NH1",
+          "dist": 3.3053
+        },
+        {
+          "at1": "ARG A133.NH2",
+          "at2": "ARG A139.NE",
+          "dist": 3.1559
+        }
+      ],
+      "severe": []
+    }
+  },
+  "fixside": {},
+  "getss": {},
+  "headers": {
+    "entry_id": "",
+    "method": "unknown",
+    "resolution": "N.A.",
+    "title": ""
+  },
+  "inscodes": {},
+  "ligands": {},
+  "loaded_structure": "/Users/gbayarri/projects/BioBB/tutorials/biobb_wf_structure_checking/biobb_wf_structure_checking/notebooks/5360fe24-7e9a-4261-928a-04522e8646ba/1z83.final.pdb",
+  "metals": {},
+  "models": {
+    "nmodels": 1
+  },
+  "rem_hydrogen": {
+    "n_detected": 195
+  },
+  "sequences": {},
+  "stats": {
+    "biounit": false,
+    "ca_only": false,
+    "chain_guess_details": [
+      {
+        "A": {
+          "DNA": 0.0,
+          "Other": 0.01025641025641022,
+          "Protein": 0.9897435897435898,
+          "RNA": 0.0
+        }
+      }
+    ],
+    "chain_ids": [
+      {
+        "A": "Protein"
+      }
+    ],
+    "models_type": 0,
+    "nchains": [
+      1
+    ],
+    "nmodels": 1,
+    "stats": {
+      "num_ats": 3078,
+      "num_h": 1557,
+      "num_res": 195,
+      "num_wat": 0,
+      "res_h": 195,
+      "res_hetats": 0,
+      "res_insc": 0,
+      "res_ligands": 0
+    },
+    "total_charge": null
+  },
+  "water": {}
+}
+</pre>
 </div>
 </div>
 </div>
@@ -8962,12 +11052,12 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [34]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ipywidgets</span> <span class="kn">import</span> <span class="n">Layout</span>
@@ -8983,6 +11073,1092 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 
 <span class="n">display</span><span class="p">(</span><span class="n">two_columns</span><span class="p">)</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+  <div style="width: 50%; float:left;">
+    <pre>{
+      "FASTA": {
+        "canonical": "",
+        "structure": ">pdb_sq_A Frags: 0-194\nSMEEKLKKTNIIFVVGGPGSGKGTQCEKIVQKYGYTHLSTGDLLRSEVSSGSARGKKLSE\nIMEKGQLVPLETVLDMLRDAMVAKVNTSKGFLIDGYPREVQQGEEFERRIGQPTLLLYVD\nAGPETMTQRLLKRGETSGRVDDNEETIKKRLETYYKATEPVIAFYEKRGIVRKVNAEGSV\nDSVFSQVCTHLDALL\n>pdb_sq_B Frags: 0-194\nSMEEKLKKTNIIFVVGGPGSGKGTQCEKIVQKYGYTHLSTGDLLRSEVSSGSARGKKLSE\nIMEKGQLVPLETVLDMLRDAMVAKVNTSKGFLIDGYPREVQQGEEFERRIGQPTLLLYVD\nAGPETMTQRLLKRGETSGRVDDNEETIKKRLETYYKATEPVIAFYEKRGIVRKVNAEGSV\nDSVFSQVCTHLDALL\n>pdb_sq_C Frags: 0-194\nSMEEKLKKTNIIFVVGGPGSGKGTQCEKIVQKYGYTHLSTGDLLRSEVSSGSARGKKLSE\nIMEKGQLVPLETVLDMLRDAMVAKVNTSKGFLIDGYPREVQQGEEFERRIGQPTLLLYVD\nAGPETMTQRLLKRGETSGRVDDNEETIKKRLETYYKATEPVIAFYEKRGIVRKVNAEGSV\nDSVFSQVCTHLDALL\n"
+      },
+      "add_hydrogen": {
+        "ionic_detected": [
+          "GLU A2",
+          "GLU A3",
+          "LYS A4",
+          "LYS A6",
+          "LYS A7",
+          "LYS A21",
+          "CYS A25",
+          "GLU A26",
+          "LYS A27",
+          "LYS A31",
+          "TYR A32",
+          "TYR A34",
+          "HIS A36",
+          "ASP A41",
+          "ARG A44",
+          "GLU A46",
+          "ARG A53",
+          "LYS A55",
+          "LYS A56",
+          "GLU A59",
+          "GLU A62",
+          "LYS A63",
+          "GLU A70",
+          "ASP A74",
+          "ARG A77",
+          "ASP A78",
+          "LYS A83",
+          "LYS A88",
+          "ASP A93",
+          "TYR A95",
+          "ARG A97",
+          "GLU A98",
+          "GLU A103",
+          "GLU A104",
+          "GLU A106",
+          "ARG A107",
+          "ARG A108",
+          "TYR A117",
+          "ASP A119",
+          "GLU A123",
+          "ARG A128",
+          "LYS A131",
+          "ARG A132",
+          "GLU A134",
+          "ARG A138",
+          "ASP A140",
+          "ASP A141",
+          "GLU A143",
+          "GLU A144",
+          "LYS A147",
+          "LYS A148",
+          "ARG A149",
+          "GLU A151",
+          "TYR A153",
+          "TYR A154",
+          "LYS A155",
+          "GLU A158",
+          "TYR A164",
+          "GLU A165",
+          "LYS A166",
+          "ARG A167",
+          "ARG A171",
+          "LYS A172",
+          "GLU A176",
+          "ASP A180",
+          "CYS A187",
+          "HIS A189",
+          "ASP A191",
+          "GLU B2",
+          "GLU B3",
+          "LYS B4",
+          "LYS B6",
+          "LYS B7",
+          "LYS B21",
+          "CYS B25",
+          "GLU B26",
+          "LYS B27",
+          "LYS B31",
+          "TYR B32",
+          "TYR B34",
+          "HIS B36",
+          "ASP B41",
+          "ARG B44",
+          "GLU B46",
+          "ARG B53",
+          "LYS B55",
+          "LYS B56",
+          "GLU B59",
+          "GLU B62",
+          "LYS B63",
+          "GLU B70",
+          "ASP B74",
+          "ARG B77",
+          "ASP B78",
+          "LYS B83",
+          "LYS B88",
+          "ASP B93",
+          "TYR B95",
+          "ARG B97",
+          "GLU B98",
+          "GLU B103",
+          "GLU B104",
+          "GLU B106",
+          "ARG B107",
+          "ARG B108",
+          "TYR B117",
+          "ASP B119",
+          "GLU B123",
+          "ARG B128",
+          "LYS B131",
+          "ARG B132",
+          "GLU B134",
+          "ARG B138",
+          "ASP B140",
+          "ASP B141",
+          "GLU B143",
+          "GLU B144",
+          "LYS B147",
+          "LYS B148",
+          "ARG B149",
+          "GLU B151",
+          "TYR B153",
+          "TYR B154",
+          "LYS B155",
+          "GLU B158",
+          "TYR B164",
+          "GLU B165",
+          "LYS B166",
+          "ARG B167",
+          "ARG B171",
+          "LYS B172",
+          "GLU B176",
+          "ASP B180",
+          "CYS B187",
+          "HIS B189",
+          "ASP B191",
+          "GLU C2",
+          "GLU C3",
+          "LYS C4",
+          "LYS C6",
+          "LYS C7",
+          "LYS C21",
+          "CYS C25",
+          "GLU C26",
+          "LYS C27",
+          "LYS C31",
+          "TYR C32",
+          "TYR C34",
+          "HIS C36",
+          "ASP C41",
+          "ARG C44",
+          "GLU C46",
+          "ARG C53",
+          "LYS C55",
+          "LYS C56",
+          "GLU C59",
+          "GLU C62",
+          "LYS C63",
+          "GLU C70",
+          "ASP C74",
+          "ARG C77",
+          "ASP C78",
+          "LYS C83",
+          "LYS C88",
+          "ASP C93",
+          "TYR C95",
+          "ARG C97",
+          "GLU C98",
+          "GLU C103",
+          "GLU C104",
+          "GLU C106",
+          "ARG C107",
+          "ARG C108",
+          "TYR C117",
+          "ASP C119",
+          "GLU C123",
+          "ARG C128",
+          "LYS C131",
+          "ARG C132",
+          "GLU C134",
+          "ARG C138",
+          "ASP C140",
+          "ASP C141",
+          "GLU C143",
+          "GLU C144",
+          "LYS C147",
+          "LYS C148",
+          "ARG C149",
+          "GLU C151",
+          "TYR C153",
+          "TYR C154",
+          "LYS C155",
+          "GLU C158",
+          "TYR C164",
+          "GLU C165",
+          "LYS C166",
+          "ARG C167",
+          "ARG C171",
+          "LYS C172",
+          "GLU C176",
+          "ASP C180",
+          "CYS C187",
+          "HIS C189",
+          "ASP C191"
+        ]
+      },
+      "altloc": {
+        "ASN A85": {
+          "CA": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CB": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CG": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "ND2": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "OD1": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ]
+        },
+        "GLU B165": {
+          "CA": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CB": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CD": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CG": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "OE1": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "OE2": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ]
+        },
+        "GLU C143": {
+          "CA": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CB": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CD": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CG": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "OE1": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "OE2": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ]
+        },
+        "SER A45": {
+          "CA": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CB": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "OG": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ]
+        },
+        "VAL A67": {
+          "CA": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CB": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CG1": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CG2": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ]
+        }
+      },
+      "amide": {
+        "n_amides": 36
+      },
+      "backbone": {
+        "missing_atoms": {
+          "LEU A194": [
+            "OXT"
+          ],
+          "LEU B194": [
+            "OXT"
+          ],
+          "LEU C194": [
+            "OXT"
+          ]
+        }
+      },
+      "chains": {
+        "A": "Protein/0",
+        "B": "Protein/0",
+        "C": "Protein/0",
+        "unlabelled": false
+      },
+      "chiral": {
+        "n_chirals": 69
+      },
+      "chiral_bck": {
+        "n_chirals": 528
+      },
+      "cistransbck": {
+        "cis": [
+          [
+            "TYR A95",
+            "PRO A96",
+            2.032
+          ],
+          [
+            "TYR B95",
+            "PRO B96",
+            -3.952
+          ],
+          [
+            "TYR C95",
+            "PRO C96",
+            3.605
+          ],
+          [
+            "SER C136",
+            "GLY C137",
+            1.028
+          ]
+        ]
+      },
+      "clashes": {
+        "detected": {
+          "apolar": [
+            {
+              "at1": "GLU A46.OE1",
+              "at2": "MET A75.CE",
+              "dist": 2.651
+            },
+            {
+              "at1": "ARG A53.O",
+              "at2": "LYS A56.CG",
+              "dist": 2.7251
+            },
+            {
+              "at1": "GLU A123.O",
+              "at2": "GLN A127.CG",
+              "dist": 2.8177
+            },
+            {
+              "at1": "GLU B70.CD",
+              "at2": " ZN B642.ZN",
+              "dist": 2.893
+            },
+            {
+              "at1": "ASP C74.CG",
+              "at2": " ZN C645.ZN",
+              "dist": 2.7006
+            }
+          ],
+          "negative": [
+            {
+              "at1": "GLU A70.OE2",
+              "at2": "ASP A74.OD2",
+              "dist": 3.3062
+            },
+            {
+              "at1": "GLU A70.OE2",
+              "at2": "GLU B70.OE1",
+              "dist": 3.4246
+            },
+            {
+              "at1": "GLU A70.OE2",
+              "at2": "GLU B104.OE1",
+              "dist": 3.4053
+            },
+            {
+              "at1": "ASP A74.OD1",
+              "at2": "GLU B70.OE2",
+              "dist": 3.1557
+            },
+            {
+              "at1": "ASP A74.OD2",
+              "at2": "GLU B104.OE1",
+              "dist": 3.0494
+            },
+            {
+              "at1": "GLU C70.OE2",
+              "at2": "ASP C74.OD1",
+              "dist": 3.2633
+            }
+          ],
+          "polar_acceptor": [
+            {
+              "at1": "GLU A2.OE2",
+              "at2": "ILE A109.O",
+              "dist": 2.5821
+            },
+            {
+              "at1": "SER A58.O",
+              "at2": "GLU A62.OE2",
+              "dist": 2.9717
+            },
+            {
+              "at1": "ASP A74.OD2",
+              "at2": "GLU B104.OE1",
+              "dist": 3.0494
+            }
+          ],
+          "polar_donor": [],
+          "positive": [
+            {
+              "at1": "ARG A44.NH1",
+              "at2": "ARG A138.NH1",
+              "dist": 3.4254
+            },
+            {
+              "at1": "ARG A132.NH2",
+              "at2": "ARG A138.NE",
+              "dist": 3.3889
+            },
+            {
+              "at1": "LYS B6.NZ",
+              "at2": "ARG C171.NH2",
+              "dist": 3.439
+            },
+            {
+              "at1": "ARG B44.NH1",
+              "at2": "ARG B138.NH1",
+              "dist": 3.2688
+            },
+            {
+              "at1": "ARG B138.NH2",
+              "at2": "ARG B149.NH2",
+              "dist": 3.3051
+            },
+            {
+              "at1": "ARG C44.NH1",
+              "at2": "ARG C138.NH1",
+              "dist": 3.3648
+            },
+            {
+              "at1": "ARG C132.NH2",
+              "at2": "ARG C138.NH1",
+              "dist": 3.3057
+            },
+            {
+              "at1": "ARG C138.NH2",
+              "at2": "ARG C149.NH2",
+              "dist": 3.3646
+            }
+          ],
+          "severe": []
+        }
+      },
+      "fixside": {
+        "detected_missing": {
+          "ARG C53": [
+            "CD",
+            "NE",
+            "CZ",
+            "NH1",
+            "NH2"
+          ],
+          "GLN A127": [
+            "CD",
+            "OE1",
+            "NE2"
+          ],
+          "GLN B100": [
+            "CG",
+            "CD",
+            "OE1",
+            "NE2"
+          ],
+          "GLN B127": [
+            "CD",
+            "OE1",
+            "NE2"
+          ],
+          "GLN C127": [
+            "CD",
+            "OE1",
+            "NE2"
+          ],
+          "GLU A123": [
+            "CD",
+            "OE1",
+            "OE2"
+          ],
+          "GLU A143": [
+            "CD",
+            "OE1",
+            "OE2"
+          ],
+          "GLU B123": [
+            "CG",
+            "CD",
+            "OE1",
+            "OE2"
+          ],
+          "GLU B151": [
+            "CD",
+            "OE1",
+            "OE2"
+          ],
+          "GLU B3": [
+            "OE1",
+            "OE2"
+          ],
+          "GLU C123": [
+            "CD",
+            "OE1",
+            "OE2"
+          ],
+          "GLU C134": [
+            "CD",
+            "OE1",
+            "OE2"
+          ],
+          "GLU C2": [
+            "CD",
+            "OE1",
+            "OE2"
+          ],
+          "GLU C59": [
+            "CD",
+            "OE1",
+            "OE2"
+          ],
+          "LEU B193": [
+            "CD1",
+            "CD2"
+          ],
+          "LEU C193": [
+            "CG",
+            "CD1",
+            "CD2"
+          ],
+          "LYS A155": [
+            "CE",
+            "NZ"
+          ],
+          "LYS A56": [
+            "CD",
+            "CE",
+            "NZ"
+          ],
+          "LYS A63": [
+            "CD",
+            "CE",
+            "NZ"
+          ],
+          "LYS A7": [
+            "CE",
+            "NZ"
+          ],
+          "LYS B131": [
+            "CD",
+            "CE",
+            "NZ"
+          ],
+          "LYS B155": [
+            "CE",
+            "NZ"
+          ],
+          "LYS B166": [
+            "CE",
+            "NZ"
+          ],
+          "LYS B55": [
+            "CD",
+            "CE",
+            "NZ"
+          ],
+          "LYS B56": [
+            "CD",
+            "CE",
+            "NZ"
+          ],
+          "LYS B7": [
+            "CD",
+            "CE",
+            "NZ"
+          ],
+          "LYS C131": [
+            "CD",
+            "CE",
+            "NZ"
+          ],
+          "LYS C55": [
+            "CE",
+            "NZ"
+          ],
+          "LYS C56": [
+            "CE",
+            "NZ"
+          ],
+          "LYS C7": [
+            "CE",
+            "NZ"
+          ],
+          "LYS C83": [
+            "CE",
+            "NZ"
+          ],
+          "LYS C88": [
+            "CE",
+            "NZ"
+          ]
+        }
+      },
+      "getss": {},
+      "headers": {
+        "entry_id": "",
+        "method": "unknown",
+        "resolution": "N.A.",
+        "title": ""
+      },
+      "inscodes": {},
+      "ligands": {
+        "detected": [
+          " ZN A601",
+          " ZN A641",
+          "SO4 A702",
+          "AP5 A631",
+          " ZN B611",
+          " ZN B642",
+          " ZN B643",
+          "SO4 B701",
+          "SO4 B703",
+          "AP5 B632",
+          " ZN C621",
+          " ZN C644",
+          " ZN C645",
+          "AP5 C633"
+        ]
+      },
+      "loaded_structure": "/Users/gbayarri/projects/BioBB/tutorials/biobb_wf_structure_checking/biobb_wf_structure_checking/notebooks/ff4482b7-13f1-4a56-a2f1-3698589289d2/1z83.pdb",
+      "metals": {
+        "detected": [
+          " ZN A601",
+          " ZN A641",
+          " ZN B611",
+          " ZN B642",
+          " ZN B643",
+          " ZN C621",
+          " ZN C644",
+          " ZN C645"
+        ]
+      },
+      "models": {
+        "nmodels": 1
+      },
+      "rem_hydrogen": {},
+      "sequences": {},
+      "stats": {
+        "biounit": false,
+        "ca_only": false,
+        "chain_guess_details": [
+          {
+            "A": {
+              "DNA": 0.0,
+              "Other": 0.02010050251256279,
+              "Protein": 0.9798994974874372,
+              "RNA": 0.0
+            },
+            "B": {
+              "DNA": 0.0,
+              "Other": 0.02985074626865669,
+              "Protein": 0.9701492537313433,
+              "RNA": 0.0
+            },
+            "C": {
+              "DNA": 0.0,
+              "Other": 0.02010050251256279,
+              "Protein": 0.9798994974874372,
+              "RNA": 0.0
+            }
+          }
+        ],
+        "chain_ids": [
+          {
+            "A": "Protein",
+            "B": "Protein",
+            "C": "Protein"
+          }
+        ],
+        "models_type": 0,
+        "nchains": [
+          3
+        ],
+        "nmodels": 1,
+        "stats": {
+          "num_ats": 5123,
+          "num_h": 0,
+          "num_res": 1057,
+          "num_wat": 458,
+          "res_h": 0,
+          "res_hetats": 472,
+          "res_insc": 0,
+          "res_ligands": 14
+        },
+        "total_charge": null
+      },
+      "water": {
+        "n_detected": 458
+      }
+    }
+    None</pre></div>
+  <div style="width: 49%; float:left; margin-left:1%;">
+    <pre>{
+      "FASTA": {
+        "canonical": "",
+        "structure": ">pdb_sq_A Frags: 1-195\nSMEEKLKKTNIIFVVGGPGSGKGTQCEKIVQKYGYTHLSTGDLLRSEVSSGSARGKKLSE\nIMEKGQLVPLETVLDMLRDAMVAKVNTSKGFLIDGYPREVQQGEEFERRIGQPTLLLYVD\nAGPETMTQRLLKRGETSGRVDDNEETIKKRLETYYKATEPVIAFYEKRGIVRKVNAEGSV\nDSVFSQVCTHLDALL\n"
+      },
+      "add_hydrogen": {
+        "ionic_detected": [
+          "GLU A3",
+          "GLU A4",
+          "LYS A5",
+          "LYS A7",
+          "LYS A8",
+          "LYS A22",
+          "CYS A26",
+          "GLU A27",
+          "LYS A28",
+          "LYS A32",
+          "TYR A33",
+          "TYR A35",
+          "ASP A42",
+          "ARG A45",
+          "GLU A47",
+          "ARG A54",
+          "LYS A56",
+          "LYS A57",
+          "GLU A60",
+          "GLU A63",
+          "LYS A64",
+          "GLU A71",
+          "ASP A75",
+          "ARG A78",
+          "ASP A79",
+          "LYS A84",
+          "LYS A89",
+          "ASP A94",
+          "TYR A96",
+          "ARG A98",
+          "GLU A99",
+          "GLU A104",
+          "GLU A105",
+          "GLU A107",
+          "ARG A108",
+          "ARG A109",
+          "TYR A118",
+          "ASP A120",
+          "GLU A124",
+          "ARG A129",
+          "LYS A132",
+          "ARG A133",
+          "GLU A135",
+          "ARG A139",
+          "ASP A141",
+          "ASP A142",
+          "GLU A144",
+          "GLU A145",
+          "LYS A148",
+          "LYS A149",
+          "ARG A150",
+          "GLU A152",
+          "TYR A154",
+          "TYR A155",
+          "LYS A156",
+          "GLU A159",
+          "TYR A165",
+          "GLU A166",
+          "LYS A167",
+          "ARG A168",
+          "ARG A172",
+          "LYS A173",
+          "GLU A177",
+          "ASP A181",
+          "CYS A188",
+          "ASP A192"
+        ]
+      },
+      "altloc": {},
+      "amide": {
+        "n_amides": 12
+      },
+      "backbone": {},
+      "chains": {
+        "A": "Protein/0",
+        "unlabelled": false
+      },
+      "chiral": {
+        "n_chirals": 23
+      },
+      "chiral_bck": {
+        "n_chirals": 176
+      },
+      "cistransbck": {
+        "cis": [
+          [
+            "TYR A96",
+            "PRO A97",
+            -10.786
+          ]
+        ]
+      },
+      "clashes": {
+        "detected": {
+          "apolar": [],
+          "negative": [],
+          "polar_acceptor": [],
+          "polar_donor": [],
+          "positive": [
+            {
+              "at1": "ARG A45.NH2",
+              "at2": "ARG A139.NH1",
+              "dist": 3.3053
+            },
+            {
+              "at1": "ARG A133.NH2",
+              "at2": "ARG A139.NE",
+              "dist": 3.1559
+            }
+          ],
+          "severe": []
+        }
+      },
+      "fixside": {},
+      "getss": {},
+      "headers": {
+        "entry_id": "",
+        "method": "unknown",
+        "resolution": "N.A.",
+        "title": ""
+      },
+      "inscodes": {},
+      "ligands": {},
+      "loaded_structure": "/Users/gbayarri/projects/BioBB/tutorials/biobb_wf_structure_checking/biobb_wf_structure_checking/notebooks/5360fe24-7e9a-4261-928a-04522e8646ba/1z83.final.pdb",
+      "metals": {},
+      "models": {
+        "nmodels": 1
+      },
+      "rem_hydrogen": {
+        "n_detected": 195
+      },
+      "sequences": {},
+      "stats": {
+        "biounit": false,
+        "ca_only": false,
+        "chain_guess_details": [
+          {
+            "A": {
+              "DNA": 0.0,
+              "Other": 0.01025641025641022,
+              "Protein": 0.9897435897435898,
+              "RNA": 0.0
+            }
+          }
+        ],
+        "chain_ids": [
+          {
+            "A": "Protein"
+          }
+        ],
+        "models_type": 0,
+        "nchains": [
+          1
+        ],
+        "nmodels": 1,
+        "stats": {
+          "num_ats": 3078,
+          "num_h": 1557,
+          "num_res": 195,
+          "num_wat": 0,
+          "res_h": 195,
+          "res_hetats": 0,
+          "res_insc": 0,
+          "res_ligands": 0
+        },
+        "total_charge": null
+      },
+      "water": {}
+    }
+    None</pre></div>
 </div>
 </div>
 </div>
