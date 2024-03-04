@@ -2336,9 +2336,9 @@ leap_gen_top(
 ```python
 from biobb_amber.sander.sander_mdrun import sander_mdrun
 
-trj_amber = pdbCode + ".amber.crd"
-rst_amber = pdbCode + ".amber.rst"
-log_amber = pdbCode + ".amber.log"
+trj_amber = pdbCode + ".trj.crd"
+rst_amber = pdbCode + ".trj.rst"
+log_amber = pdbCode + ".trj.log"
 
 prop = {
     'simulation_type' : 'minimization',
@@ -2346,6 +2346,7 @@ prop = {
         'ntb' : 0,        # Periodic Boundary. No periodicity is applied and PME (Particle Mesh Ewald) is off.
         'cut' : 12,       # Nonbonded cutoff, in Angstroms.
         'maxcyc' : 500,   # Maximum number of cycles of minimization.
+        'ntwx': 50,       # Print coords to trajectory every 50 steps.
         'ncyc' : 50       # Minimization will be switched from steepest descent to conjugate gradient after ncyc cycles.
     }
 }

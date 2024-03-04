@@ -10675,9 +10675,9 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">biobb_amber.sander.sander_mdrun</span> <span class="kn">import</span> <span class="n">sander_mdrun</span>
 
-<span class="n">trj_amber</span> <span class="o">=</span> <span class="n">pdbCode</span> <span class="o">+</span> <span class="s2">".amber.crd"</span>
-<span class="n">rst_amber</span> <span class="o">=</span> <span class="n">pdbCode</span> <span class="o">+</span> <span class="s2">".amber.rst"</span>
-<span class="n">log_amber</span> <span class="o">=</span> <span class="n">pdbCode</span> <span class="o">+</span> <span class="s2">".amber.log"</span>
+<span class="n">trj_amber</span> <span class="o">=</span> <span class="n">pdbCode</span> <span class="o">+</span> <span class="s2">".trj.crd"</span>
+<span class="n">rst_amber</span> <span class="o">=</span> <span class="n">pdbCode</span> <span class="o">+</span> <span class="s2">".trj.rst"</span>
+<span class="n">log_amber</span> <span class="o">=</span> <span class="n">pdbCode</span> <span class="o">+</span> <span class="s2">".trj.log"</span>
 
 <span class="n">prop</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">'simulation_type'</span> <span class="p">:</span> <span class="s1">'minimization'</span><span class="p">,</span>
@@ -10685,6 +10685,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
         <span class="s1">'ntb'</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>        <span class="c1"># Periodic Boundary. No periodicity is applied and PME (Particle Mesh Ewald) is off.</span>
         <span class="s1">'cut'</span> <span class="p">:</span> <span class="mi">12</span><span class="p">,</span>       <span class="c1"># Nonbonded cutoff, in Angstroms.</span>
         <span class="s1">'maxcyc'</span> <span class="p">:</span> <span class="mi">500</span><span class="p">,</span>   <span class="c1"># Maximum number of cycles of minimization.</span>
+        <span class="s1">'ntwx'</span> <span class="p">:</span> <span class="mi">50</span>       <span class="c1"># Print coords to trajectory every 50 steps.</span>
         <span class="s1">'ncyc'</span> <span class="p">:</span> <span class="mi">50</span>       <span class="c1"># Minimization will be switched from steepest descent to conjugate gradient after ncyc cycles.</span>
     <span class="p">}</span>
 <span class="p">}</span>
