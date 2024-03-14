@@ -1,8 +1,8 @@
-
 {
   "@context": "http://schema.org",
-  "name": "Molecular Structure Checking workflow",
+  "@id": "https://github.com/bioexcel/biobb_wf_structure_checking",
   "@type": "ItemList",
+  "name": "Molecular Structure Checking workflow",
   "itemListElement": [
     {
       "@type": "SoftwareApplication",
