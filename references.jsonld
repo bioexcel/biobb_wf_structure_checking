@@ -1,0 +1,38 @@
+
+{
+  "@context": "http://schema.org",
+  "name": "Molecular Structure Checking workflow",
+  "@type": "ItemList",
+  "itemListElement": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://raw.githubusercontent.com/bioexcel/biobb/master/references.jsonld",
+      "name": "biobb"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://raw.githubusercontent.com/bioexcel/biobb_io/master/references.jsonld",
+      "name": "biobb_io"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://raw.githubusercontent.com/bioexcel/biobb_structure_utils/master/references.jsonld",
+      "name": "biobb_structure_utils"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://raw.githubusercontent.com/bioexcel/biobb_model/master/references.jsonld",
+      "name": "biobb_model"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://raw.githubusercontent.com/bioexcel/biobb_amber/master/references.jsonld",
+      "name": "biobb_amber"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://raw.githubusercontent.com/bioexcel/biobb_chemistry/master/references.jsonld",
+      "name": "biobb_chemistry"
+    }
+  ]
+}
