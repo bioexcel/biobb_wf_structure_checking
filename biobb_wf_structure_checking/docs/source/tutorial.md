@@ -37,7 +37,6 @@ An implementation of this workflow in a **web-based Graphical User Interface (GU
 * [modeller](https://salilab.org/modeller/): Software used for homology or comparative modeling of protein three-dimensional structures.
 * [jupyter](https://jupyter.org/): Free software, open standards, and web services for interactive computing across all programming languages.
 * [nglview](http://nglviewer.org/#nglview): Jupyter/IPython widget to interactively view molecular structures and trajectories in notebooks.
-* [plotly](https://plot.ly/python/offline/): Python interactive graphing library integrated in Jupyter notebooks.
 
 ### Conda Installation and Launch
 
