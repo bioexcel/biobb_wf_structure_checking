@@ -7506,11 +7506,6 @@ a.anchor-link {
     display: inline-block;
     white-space: normal;
   }
-
-  pre {
-    max-height: 500px;
-    overflow-y: scroll;
-  }
 </style>
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
@@ -7547,7 +7542,7 @@ a.anchor-link {
 <li><a href="https://github.com/bioexcel/biobb_amber">biobb_amber</a>: Tools to setup and simulate atomistic MD simulations using AMBER MD package.</li>
 <li><a href="https://github.com/bioexcel/biobb_chemistry">biobb_chemistry</a>: Tools to perform chemoinformatics on molecular structures.</li>
 </ul>
-<h3 id="Auxiliar-libraries-used">Auxiliary libraries used<a class="anchor-link" href="#Auxiliar-libraries-used">¶</a></h3><ul>
+<h3 id="Auxiliary-libraries-used">Auxiliary libraries used<a class="anchor-link" href="#Auxiliary-libraries-used">¶</a></h3><ul>
 <li><a href="https://salilab.org/modeller/">modeller</a>: Software used for homology or comparative modeling of protein three-dimensional structures.</li>
 <li><a href="https://jupyter.org/">jupyter</a>: Free software, open standards, and web services for interactive computing across all programming languages.</li>
 <li><a href="http://nglviewer.org/#nglview">nglview</a>: Jupyter/IPython widget to interactively view molecular structures and trajectories in notebooks.</li>
@@ -7594,11 +7589,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p><a id="input"></a></p>
-<h2 id="Input-parameters">Input parameters<a class="anchor-link" href="#Input-parameters">¶</a></h2><p><strong>Input parameters</strong> needed:</p>
-<ul>
-<li><strong>pdbCode</strong>: PDB code of the protein structure (e.g. 1Z83, <a href="https://doi.org/10.2210/pdb1Z83/pdb">https://doi.org/10.2210/pdb1Z83/pdb</a>)</li>
-</ul>
+<h2 id="Initializing-colab">Initializing colab<a class="anchor-link" href="#Initializing-colab">¶</a></h2><p>The two cells below are used only in case this notebook is executed via <strong>Google Colab</strong>. Take into account that, for running conda on <strong>Google Colab</strong>, the <strong>condacolab</strong> library must be installed. As <a href="https://pypi.org/project/condacolab/">explained here</a>, the installation requires a <strong>kernel restart</strong>, so when running this notebook in <strong>Google Colab</strong>, don't run all cells until this <strong>installation</strong> is properly <strong>finished</strong> and the <strong>kernel</strong> has <strong>restarted</strong>.</p>
 </div>
 </div>
 </div>
@@ -7607,7 +7598,81 @@ a.anchor-link {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Only executed when using google colab</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="k">if</span> <span class="s1">'google.colab'</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+  <span class="kn">import</span> <span class="nn">subprocess</span>
+  <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+  <span class="k">try</span><span class="p">:</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"conda"</span><span class="p">,</span> <span class="s2">"-V"</span><span class="p">],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+  <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">"-m"</span><span class="p">,</span> <span class="s2">"pip"</span><span class="p">,</span> <span class="s2">"install"</span><span class="p">,</span> <span class="s2">"condacolab"</span><span class="p">],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="kn">import</span> <span class="nn">condacolab</span>
+    <span class="n">condacolab</span><span class="o">.</span><span class="n">install</span><span class="p">()</span>
+    <span class="c1"># Clone repository</span>
+    <span class="n">repo_URL</span> <span class="o">=</span> <span class="s2">"https://github.com/bioexcel/biobb_wf_structure_checking.git"</span>
+    <span class="n">repo_name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">repo_URL</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'.'</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">repo_name</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+      <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"mamba"</span><span class="p">,</span> <span class="s2">"install"</span><span class="p">,</span> <span class="s2">"-y"</span><span class="p">,</span> <span class="s2">"git"</span><span class="p">],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+      <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"git"</span><span class="p">,</span> <span class="s2">"clone"</span><span class="p">,</span> <span class="n">repo_URL</span><span class="p">],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s2">"⏬ Repository properly cloned."</span><span class="p">)</span>
+    <span class="c1"># Install environment</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"⏳ Creating environment..."</span><span class="p">)</span>
+    <span class="n">env_file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">repo_name</span><span class="si">}</span><span class="s2">/conda_env/environment.yml"</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"mamba"</span><span class="p">,</span> <span class="s2">"env"</span><span class="p">,</span> <span class="s2">"update"</span><span class="p">,</span> <span class="s2">"-n"</span><span class="p">,</span> <span class="s2">"base"</span><span class="p">,</span> <span class="s2">"-f"</span><span class="p">,</span> <span class="n">env_file_path</span><span class="p">],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"🎨 Install NGLView dependencies..."</span><span class="p">)</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"mamba"</span><span class="p">,</span> <span class="s2">"install"</span><span class="p">,</span> <span class="s2">"-y"</span><span class="p">,</span> <span class="s2">"-c"</span><span class="p">,</span> <span class="s2">"conda-forge"</span><span class="p">,</span> <span class="s2">"nglview==3.0.8"</span><span class="p">,</span> <span class="s2">"ipywidgets=7.7.2"</span><span class="p">],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"👍 Conda environment successfully created and updated."</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Enable widgets for colab</span>
+<span class="k">if</span> <span class="s1">'google.colab'</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+  <span class="kn">from</span> <span class="nn">google.colab</span> <span class="kn">import</span> <span class="n">output</span>
+  <span class="n">output</span><span class="o">.</span><span class="n">enable_custom_widget_manager</span><span class="p">()</span>
+  <span class="c1"># Change working dir</span>
+  <span class="kn">import</span> <span class="nn">os</span>
+  <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">"biobb_wf_structure_checking/biobb_wf_structure_checking/notebooks"</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"📂 New working directory: </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><a id="input"></a></p>
+<h2 id="Input-parameters">Input parameters<a class="anchor-link" href="#Input-parameters">¶</a></h2><p><strong>Input parameters</strong> needed:</p>
+<ul>
+<li><strong>pdbCode</strong>: PDB code of the protein structure (e.g. 1Z83, <a href="https://doi.org/10.2210/pdb1Z83/pdb">https://doi.org/10.2210/pdb1Z83/pdb</a>)</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">nglview</span>
@@ -7615,6 +7680,18 @@ a.anchor-link {
 
 <span class="n">pdbCode</span> <span class="o">=</span> <span class="s2">"1z83"</span> <span class="c1"># Should be replaced to check different structures </span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre></pre>
 </div>
 </div>
 </div>
@@ -7767,7 +7844,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [33]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
@@ -8610,7 +8687,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
       "AP5 C633"
     ]
   },
-  "loaded_structure": "/Users/gbayarri/projects/BioBB/tutorials/biobb_wf_structure_checking/biobb_wf_structure_checking/notebooks/ff4482b7-13f1-4a56-a2f1-3698589289d2/1z83.pdb",
+  "loaded_structure": "/Users/gbayarri/projects/BioBB/tutorials/biobb_wf_structure_checking/biobb_wf_structure_checking/notebooks/69dda4dc-67e5-4c7d-8377-9a800ee52f70/1z83.pdb",
   "metals": {
     "detected": [
       " ZN A601",
@@ -8709,7 +8786,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'models'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -8812,7 +8889,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'chains'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -8922,7 +8999,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'altloc'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -9281,7 +9358,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'getss'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -9384,7 +9461,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [20]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'metals'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -9504,7 +9581,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [21]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [23]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'ligands'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -9630,7 +9707,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [24]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [26]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'stats'</span><span class="p">][</span><span class="s1">'stats'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -9741,7 +9818,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [27]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [29]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'stats'</span><span class="p">][</span><span class="s1">'stats'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -9850,7 +9927,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [30]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [32]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'amide'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -9954,7 +10031,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [33]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [35]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'chiral'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -10056,7 +10133,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [36]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [38]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'fixside'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -10319,7 +10396,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [39]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [41]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'backbone'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -10390,8 +10467,8 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Add Modeller key in the config file before running the next cell</span>
 <span class="c1"># Alternatively, add the Modeller key in the "modeller_key" property of the fix_backbone building block</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="n">conda_env_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'CONDA_PREFIX'</span><span class="p">]</span>
-<span class="n">modeller_key_path</span> <span class="o">=</span> <span class="n">conda_env_path</span> <span class="o">+</span> <span class="s2">"/lib/modeller-10.3/modlib/modeller/config.py"</span>
+<span class="n">prefix</span> <span class="o">=</span> <span class="s1">'/usr/local'</span> <span class="k">if</span> <span class="s1">'google.colab'</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span> <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">'CONDA_PREFIX'</span><span class="p">)</span> 
+<span class="n">modeller_key_path</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s2">"/lib/modeller-10.5/modlib/modeller/config.py"</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"WARNING: Edit this file and add your Modeller KEY:</span><span class="se">\n</span><span class="s2"> "</span> <span class="o">+</span> <span class="n">modeller_key_path</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -10489,7 +10566,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [44]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [46]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'clashes'</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -10684,7 +10761,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
         <span class="s1">'ntb'</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>        <span class="c1"># Periodic Boundary. No periodicity is applied and PME (Particle Mesh Ewald) is off.</span>
         <span class="s1">'cut'</span> <span class="p">:</span> <span class="mi">12</span><span class="p">,</span>       <span class="c1"># Nonbonded cutoff, in Angstroms.</span>
         <span class="s1">'maxcyc'</span> <span class="p">:</span> <span class="mi">500</span><span class="p">,</span>   <span class="c1"># Maximum number of cycles of minimization.</span>
-        <span class="s1">'ntwx'</span> <span class="p">:</span> <span class="mi">50</span>       <span class="c1"># Print coords to trajectory every 50 steps.</span>
+        <span class="s1">'ntwx'</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>       <span class="c1"># Print coords to trajectory every 50 steps.</span>
         <span class="s1">'ncyc'</span> <span class="p">:</span> <span class="mi">50</span>       <span class="c1"># Minimization will be switched from steepest descent to conjugate gradient after ncyc cycles.</span>
     <span class="p">}</span>
 <span class="p">}</span>
@@ -10845,7 +10922,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [31]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [53]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
@@ -10994,7 +11071,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
   },
   "inscodes": {},
   "ligands": {},
-  "loaded_structure": "/Users/gbayarri/projects/BioBB/tutorials/biobb_wf_structure_checking/biobb_wf_structure_checking/notebooks/5360fe24-7e9a-4261-928a-04522e8646ba/1z83.final.pdb",
+  "loaded_structure": "/Users/gbayarri/projects/BioBB/tutorials/biobb_wf_structure_checking/biobb_wf_structure_checking/notebooks/d149970a-876b-4861-a156-8d10e28c3b38/1z83.final.pdb",
   "metals": {},
   "models": {
     "nmodels": 1
@@ -11062,7 +11139,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [34]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [54]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ipywidgets</span> <span class="kn">import</span> <span class="n">Layout</span>
@@ -11089,1081 +11166,7 @@ Alternatively, a <strong>PDB file</strong> can be used as starting structure. <b
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-  <div style="width: 50%; float:left;">
-    <pre>{
-      "FASTA": {
-        "canonical": "",
-        "structure": ">pdb_sq_A Frags: 0-194\nSMEEKLKKTNIIFVVGGPGSGKGTQCEKIVQKYGYTHLSTGDLLRSEVSSGSARGKKLSE\nIMEKGQLVPLETVLDMLRDAMVAKVNTSKGFLIDGYPREVQQGEEFERRIGQPTLLLYVD\nAGPETMTQRLLKRGETSGRVDDNEETIKKRLETYYKATEPVIAFYEKRGIVRKVNAEGSV\nDSVFSQVCTHLDALL\n>pdb_sq_B Frags: 0-194\nSMEEKLKKTNIIFVVGGPGSGKGTQCEKIVQKYGYTHLSTGDLLRSEVSSGSARGKKLSE\nIMEKGQLVPLETVLDMLRDAMVAKVNTSKGFLIDGYPREVQQGEEFERRIGQPTLLLYVD\nAGPETMTQRLLKRGETSGRVDDNEETIKKRLETYYKATEPVIAFYEKRGIVRKVNAEGSV\nDSVFSQVCTHLDALL\n>pdb_sq_C Frags: 0-194\nSMEEKLKKTNIIFVVGGPGSGKGTQCEKIVQKYGYTHLSTGDLLRSEVSSGSARGKKLSE\nIMEKGQLVPLETVLDMLRDAMVAKVNTSKGFLIDGYPREVQQGEEFERRIGQPTLLLYVD\nAGPETMTQRLLKRGETSGRVDDNEETIKKRLETYYKATEPVIAFYEKRGIVRKVNAEGSV\nDSVFSQVCTHLDALL\n"
-      },
-      "add_hydrogen": {
-        "ionic_detected": [
-          "GLU A2",
-          "GLU A3",
-          "LYS A4",
-          "LYS A6",
-          "LYS A7",
-          "LYS A21",
-          "CYS A25",
-          "GLU A26",
-          "LYS A27",
-          "LYS A31",
-          "TYR A32",
-          "TYR A34",
-          "HIS A36",
-          "ASP A41",
-          "ARG A44",
-          "GLU A46",
-          "ARG A53",
-          "LYS A55",
-          "LYS A56",
-          "GLU A59",
-          "GLU A62",
-          "LYS A63",
-          "GLU A70",
-          "ASP A74",
-          "ARG A77",
-          "ASP A78",
-          "LYS A83",
-          "LYS A88",
-          "ASP A93",
-          "TYR A95",
-          "ARG A97",
-          "GLU A98",
-          "GLU A103",
-          "GLU A104",
-          "GLU A106",
-          "ARG A107",
-          "ARG A108",
-          "TYR A117",
-          "ASP A119",
-          "GLU A123",
-          "ARG A128",
-          "LYS A131",
-          "ARG A132",
-          "GLU A134",
-          "ARG A138",
-          "ASP A140",
-          "ASP A141",
-          "GLU A143",
-          "GLU A144",
-          "LYS A147",
-          "LYS A148",
-          "ARG A149",
-          "GLU A151",
-          "TYR A153",
-          "TYR A154",
-          "LYS A155",
-          "GLU A158",
-          "TYR A164",
-          "GLU A165",
-          "LYS A166",
-          "ARG A167",
-          "ARG A171",
-          "LYS A172",
-          "GLU A176",
-          "ASP A180",
-          "CYS A187",
-          "HIS A189",
-          "ASP A191",
-          "GLU B2",
-          "GLU B3",
-          "LYS B4",
-          "LYS B6",
-          "LYS B7",
-          "LYS B21",
-          "CYS B25",
-          "GLU B26",
-          "LYS B27",
-          "LYS B31",
-          "TYR B32",
-          "TYR B34",
-          "HIS B36",
-          "ASP B41",
-          "ARG B44",
-          "GLU B46",
-          "ARG B53",
-          "LYS B55",
-          "LYS B56",
-          "GLU B59",
-          "GLU B62",
-          "LYS B63",
-          "GLU B70",
-          "ASP B74",
-          "ARG B77",
-          "ASP B78",
-          "LYS B83",
-          "LYS B88",
-          "ASP B93",
-          "TYR B95",
-          "ARG B97",
-          "GLU B98",
-          "GLU B103",
-          "GLU B104",
-          "GLU B106",
-          "ARG B107",
-          "ARG B108",
-          "TYR B117",
-          "ASP B119",
-          "GLU B123",
-          "ARG B128",
-          "LYS B131",
-          "ARG B132",
-          "GLU B134",
-          "ARG B138",
-          "ASP B140",
-          "ASP B141",
-          "GLU B143",
-          "GLU B144",
-          "LYS B147",
-          "LYS B148",
-          "ARG B149",
-          "GLU B151",
-          "TYR B153",
-          "TYR B154",
-          "LYS B155",
-          "GLU B158",
-          "TYR B164",
-          "GLU B165",
-          "LYS B166",
-          "ARG B167",
-          "ARG B171",
-          "LYS B172",
-          "GLU B176",
-          "ASP B180",
-          "CYS B187",
-          "HIS B189",
-          "ASP B191",
-          "GLU C2",
-          "GLU C3",
-          "LYS C4",
-          "LYS C6",
-          "LYS C7",
-          "LYS C21",
-          "CYS C25",
-          "GLU C26",
-          "LYS C27",
-          "LYS C31",
-          "TYR C32",
-          "TYR C34",
-          "HIS C36",
-          "ASP C41",
-          "ARG C44",
-          "GLU C46",
-          "ARG C53",
-          "LYS C55",
-          "LYS C56",
-          "GLU C59",
-          "GLU C62",
-          "LYS C63",
-          "GLU C70",
-          "ASP C74",
-          "ARG C77",
-          "ASP C78",
-          "LYS C83",
-          "LYS C88",
-          "ASP C93",
-          "TYR C95",
-          "ARG C97",
-          "GLU C98",
-          "GLU C103",
-          "GLU C104",
-          "GLU C106",
-          "ARG C107",
-          "ARG C108",
-          "TYR C117",
-          "ASP C119",
-          "GLU C123",
-          "ARG C128",
-          "LYS C131",
-          "ARG C132",
-          "GLU C134",
-          "ARG C138",
-          "ASP C140",
-          "ASP C141",
-          "GLU C143",
-          "GLU C144",
-          "LYS C147",
-          "LYS C148",
-          "ARG C149",
-          "GLU C151",
-          "TYR C153",
-          "TYR C154",
-          "LYS C155",
-          "GLU C158",
-          "TYR C164",
-          "GLU C165",
-          "LYS C166",
-          "ARG C167",
-          "ARG C171",
-          "LYS C172",
-          "GLU C176",
-          "ASP C180",
-          "CYS C187",
-          "HIS C189",
-          "ASP C191"
-        ]
-      },
-      "altloc": {
-        "ASN A85": {
-          "CA": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "CB": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "CG": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "ND2": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "OD1": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ]
-        },
-        "GLU B165": {
-          "CA": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "CB": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "CD": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "CG": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "OE1": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "OE2": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ]
-        },
-        "GLU C143": {
-          "CA": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "CB": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "CD": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "CG": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "OE1": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "OE2": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ]
-        },
-        "SER A45": {
-          "CA": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "CB": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "OG": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ]
-        },
-        "VAL A67": {
-          "CA": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "CB": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "CG1": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ],
-          "CG2": [
-            {
-              "loc_label": "A",
-              "occupancy": 0.5
-            },
-            {
-              "loc_label": "B",
-              "occupancy": 0.5
-            }
-          ]
-        }
-      },
-      "amide": {
-        "n_amides": 36
-      },
-      "backbone": {
-        "missing_atoms": {
-          "LEU A194": [
-            "OXT"
-          ],
-          "LEU B194": [
-            "OXT"
-          ],
-          "LEU C194": [
-            "OXT"
-          ]
-        }
-      },
-      "chains": {
-        "A": "Protein/0",
-        "B": "Protein/0",
-        "C": "Protein/0",
-        "unlabelled": false
-      },
-      "chiral": {
-        "n_chirals": 69
-      },
-      "chiral_bck": {
-        "n_chirals": 528
-      },
-      "cistransbck": {
-        "cis": [
-          [
-            "TYR A95",
-            "PRO A96",
-            2.032
-          ],
-          [
-            "TYR B95",
-            "PRO B96",
-            -3.952
-          ],
-          [
-            "TYR C95",
-            "PRO C96",
-            3.605
-          ],
-          [
-            "SER C136",
-            "GLY C137",
-            1.028
-          ]
-        ]
-      },
-      "clashes": {
-        "detected": {
-          "apolar": [
-            {
-              "at1": "GLU A46.OE1",
-              "at2": "MET A75.CE",
-              "dist": 2.651
-            },
-            {
-              "at1": "ARG A53.O",
-              "at2": "LYS A56.CG",
-              "dist": 2.7251
-            },
-            {
-              "at1": "GLU A123.O",
-              "at2": "GLN A127.CG",
-              "dist": 2.8177
-            },
-            {
-              "at1": "GLU B70.CD",
-              "at2": " ZN B642.ZN",
-              "dist": 2.893
-            },
-            {
-              "at1": "ASP C74.CG",
-              "at2": " ZN C645.ZN",
-              "dist": 2.7006
-            }
-          ],
-          "negative": [
-            {
-              "at1": "GLU A70.OE2",
-              "at2": "ASP A74.OD2",
-              "dist": 3.3062
-            },
-            {
-              "at1": "GLU A70.OE2",
-              "at2": "GLU B70.OE1",
-              "dist": 3.4246
-            },
-            {
-              "at1": "GLU A70.OE2",
-              "at2": "GLU B104.OE1",
-              "dist": 3.4053
-            },
-            {
-              "at1": "ASP A74.OD1",
-              "at2": "GLU B70.OE2",
-              "dist": 3.1557
-            },
-            {
-              "at1": "ASP A74.OD2",
-              "at2": "GLU B104.OE1",
-              "dist": 3.0494
-            },
-            {
-              "at1": "GLU C70.OE2",
-              "at2": "ASP C74.OD1",
-              "dist": 3.2633
-            }
-          ],
-          "polar_acceptor": [
-            {
-              "at1": "GLU A2.OE2",
-              "at2": "ILE A109.O",
-              "dist": 2.5821
-            },
-            {
-              "at1": "SER A58.O",
-              "at2": "GLU A62.OE2",
-              "dist": 2.9717
-            },
-            {
-              "at1": "ASP A74.OD2",
-              "at2": "GLU B104.OE1",
-              "dist": 3.0494
-            }
-          ],
-          "polar_donor": [],
-          "positive": [
-            {
-              "at1": "ARG A44.NH1",
-              "at2": "ARG A138.NH1",
-              "dist": 3.4254
-            },
-            {
-              "at1": "ARG A132.NH2",
-              "at2": "ARG A138.NE",
-              "dist": 3.3889
-            },
-            {
-              "at1": "LYS B6.NZ",
-              "at2": "ARG C171.NH2",
-              "dist": 3.439
-            },
-            {
-              "at1": "ARG B44.NH1",
-              "at2": "ARG B138.NH1",
-              "dist": 3.2688
-            },
-            {
-              "at1": "ARG B138.NH2",
-              "at2": "ARG B149.NH2",
-              "dist": 3.3051
-            },
-            {
-              "at1": "ARG C44.NH1",
-              "at2": "ARG C138.NH1",
-              "dist": 3.3648
-            },
-            {
-              "at1": "ARG C132.NH2",
-              "at2": "ARG C138.NH1",
-              "dist": 3.3057
-            },
-            {
-              "at1": "ARG C138.NH2",
-              "at2": "ARG C149.NH2",
-              "dist": 3.3646
-            }
-          ],
-          "severe": []
-        }
-      },
-      "fixside": {
-        "detected_missing": {
-          "ARG C53": [
-            "CD",
-            "NE",
-            "CZ",
-            "NH1",
-            "NH2"
-          ],
-          "GLN A127": [
-            "CD",
-            "OE1",
-            "NE2"
-          ],
-          "GLN B100": [
-            "CG",
-            "CD",
-            "OE1",
-            "NE2"
-          ],
-          "GLN B127": [
-            "CD",
-            "OE1",
-            "NE2"
-          ],
-          "GLN C127": [
-            "CD",
-            "OE1",
-            "NE2"
-          ],
-          "GLU A123": [
-            "CD",
-            "OE1",
-            "OE2"
-          ],
-          "GLU A143": [
-            "CD",
-            "OE1",
-            "OE2"
-          ],
-          "GLU B123": [
-            "CG",
-            "CD",
-            "OE1",
-            "OE2"
-          ],
-          "GLU B151": [
-            "CD",
-            "OE1",
-            "OE2"
-          ],
-          "GLU B3": [
-            "OE1",
-            "OE2"
-          ],
-          "GLU C123": [
-            "CD",
-            "OE1",
-            "OE2"
-          ],
-          "GLU C134": [
-            "CD",
-            "OE1",
-            "OE2"
-          ],
-          "GLU C2": [
-            "CD",
-            "OE1",
-            "OE2"
-          ],
-          "GLU C59": [
-            "CD",
-            "OE1",
-            "OE2"
-          ],
-          "LEU B193": [
-            "CD1",
-            "CD2"
-          ],
-          "LEU C193": [
-            "CG",
-            "CD1",
-            "CD2"
-          ],
-          "LYS A155": [
-            "CE",
-            "NZ"
-          ],
-          "LYS A56": [
-            "CD",
-            "CE",
-            "NZ"
-          ],
-          "LYS A63": [
-            "CD",
-            "CE",
-            "NZ"
-          ],
-          "LYS A7": [
-            "CE",
-            "NZ"
-          ],
-          "LYS B131": [
-            "CD",
-            "CE",
-            "NZ"
-          ],
-          "LYS B155": [
-            "CE",
-            "NZ"
-          ],
-          "LYS B166": [
-            "CE",
-            "NZ"
-          ],
-          "LYS B55": [
-            "CD",
-            "CE",
-            "NZ"
-          ],
-          "LYS B56": [
-            "CD",
-            "CE",
-            "NZ"
-          ],
-          "LYS B7": [
-            "CD",
-            "CE",
-            "NZ"
-          ],
-          "LYS C131": [
-            "CD",
-            "CE",
-            "NZ"
-          ],
-          "LYS C55": [
-            "CE",
-            "NZ"
-          ],
-          "LYS C56": [
-            "CE",
-            "NZ"
-          ],
-          "LYS C7": [
-            "CE",
-            "NZ"
-          ],
-          "LYS C83": [
-            "CE",
-            "NZ"
-          ],
-          "LYS C88": [
-            "CE",
-            "NZ"
-          ]
-        }
-      },
-      "getss": {},
-      "headers": {
-        "entry_id": "",
-        "method": "unknown",
-        "resolution": "N.A.",
-        "title": ""
-      },
-      "inscodes": {},
-      "ligands": {
-        "detected": [
-          " ZN A601",
-          " ZN A641",
-          "SO4 A702",
-          "AP5 A631",
-          " ZN B611",
-          " ZN B642",
-          " ZN B643",
-          "SO4 B701",
-          "SO4 B703",
-          "AP5 B632",
-          " ZN C621",
-          " ZN C644",
-          " ZN C645",
-          "AP5 C633"
-        ]
-      },
-      "loaded_structure": "/Users/gbayarri/projects/BioBB/tutorials/biobb_wf_structure_checking/biobb_wf_structure_checking/notebooks/ff4482b7-13f1-4a56-a2f1-3698589289d2/1z83.pdb",
-      "metals": {
-        "detected": [
-          " ZN A601",
-          " ZN A641",
-          " ZN B611",
-          " ZN B642",
-          " ZN B643",
-          " ZN C621",
-          " ZN C644",
-          " ZN C645"
-        ]
-      },
-      "models": {
-        "nmodels": 1
-      },
-      "rem_hydrogen": {},
-      "sequences": {},
-      "stats": {
-        "biounit": false,
-        "ca_only": false,
-        "chain_guess_details": [
-          {
-            "A": {
-              "DNA": 0.0,
-              "Other": 0.02010050251256279,
-              "Protein": 0.9798994974874372,
-              "RNA": 0.0
-            },
-            "B": {
-              "DNA": 0.0,
-              "Other": 0.02985074626865669,
-              "Protein": 0.9701492537313433,
-              "RNA": 0.0
-            },
-            "C": {
-              "DNA": 0.0,
-              "Other": 0.02010050251256279,
-              "Protein": 0.9798994974874372,
-              "RNA": 0.0
-            }
-          }
-        ],
-        "chain_ids": [
-          {
-            "A": "Protein",
-            "B": "Protein",
-            "C": "Protein"
-          }
-        ],
-        "models_type": 0,
-        "nchains": [
-          3
-        ],
-        "nmodels": 1,
-        "stats": {
-          "num_ats": 5123,
-          "num_h": 0,
-          "num_res": 1057,
-          "num_wat": 458,
-          "res_h": 0,
-          "res_hetats": 472,
-          "res_insc": 0,
-          "res_ligands": 14
-        },
-        "total_charge": null
-      },
-      "water": {
-        "n_detected": 458
-      }
-    }
-    None</pre></div>
-  <div style="width: 49%; float:left; margin-left:1%;">
-    <pre>{
-      "FASTA": {
-        "canonical": "",
-        "structure": ">pdb_sq_A Frags: 1-195\nSMEEKLKKTNIIFVVGGPGSGKGTQCEKIVQKYGYTHLSTGDLLRSEVSSGSARGKKLSE\nIMEKGQLVPLETVLDMLRDAMVAKVNTSKGFLIDGYPREVQQGEEFERRIGQPTLLLYVD\nAGPETMTQRLLKRGETSGRVDDNEETIKKRLETYYKATEPVIAFYEKRGIVRKVNAEGSV\nDSVFSQVCTHLDALL\n"
-      },
-      "add_hydrogen": {
-        "ionic_detected": [
-          "GLU A3",
-          "GLU A4",
-          "LYS A5",
-          "LYS A7",
-          "LYS A8",
-          "LYS A22",
-          "CYS A26",
-          "GLU A27",
-          "LYS A28",
-          "LYS A32",
-          "TYR A33",
-          "TYR A35",
-          "ASP A42",
-          "ARG A45",
-          "GLU A47",
-          "ARG A54",
-          "LYS A56",
-          "LYS A57",
-          "GLU A60",
-          "GLU A63",
-          "LYS A64",
-          "GLU A71",
-          "ASP A75",
-          "ARG A78",
-          "ASP A79",
-          "LYS A84",
-          "LYS A89",
-          "ASP A94",
-          "TYR A96",
-          "ARG A98",
-          "GLU A99",
-          "GLU A104",
-          "GLU A105",
-          "GLU A107",
-          "ARG A108",
-          "ARG A109",
-          "TYR A118",
-          "ASP A120",
-          "GLU A124",
-          "ARG A129",
-          "LYS A132",
-          "ARG A133",
-          "GLU A135",
-          "ARG A139",
-          "ASP A141",
-          "ASP A142",
-          "GLU A144",
-          "GLU A145",
-          "LYS A148",
-          "LYS A149",
-          "ARG A150",
-          "GLU A152",
-          "TYR A154",
-          "TYR A155",
-          "LYS A156",
-          "GLU A159",
-          "TYR A165",
-          "GLU A166",
-          "LYS A167",
-          "ARG A168",
-          "ARG A172",
-          "LYS A173",
-          "GLU A177",
-          "ASP A181",
-          "CYS A188",
-          "ASP A192"
-        ]
-      },
-      "altloc": {},
-      "amide": {
-        "n_amides": 12
-      },
-      "backbone": {},
-      "chains": {
-        "A": "Protein/0",
-        "unlabelled": false
-      },
-      "chiral": {
-        "n_chirals": 23
-      },
-      "chiral_bck": {
-        "n_chirals": 176
-      },
-      "cistransbck": {
-        "cis": [
-          [
-            "TYR A96",
-            "PRO A97",
-            -10.786
-          ]
-        ]
-      },
-      "clashes": {
-        "detected": {
-          "apolar": [],
-          "negative": [],
-          "polar_acceptor": [],
-          "polar_donor": [],
-          "positive": [
-            {
-              "at1": "ARG A45.NH2",
-              "at2": "ARG A139.NH1",
-              "dist": 3.3053
-            },
-            {
-              "at1": "ARG A133.NH2",
-              "at2": "ARG A139.NE",
-              "dist": 3.1559
-            }
-          ],
-          "severe": []
-        }
-      },
-      "fixside": {},
-      "getss": {},
-      "headers": {
-        "entry_id": "",
-        "method": "unknown",
-        "resolution": "N.A.",
-        "title": ""
-      },
-      "inscodes": {},
-      "ligands": {},
-      "loaded_structure": "/Users/gbayarri/projects/BioBB/tutorials/biobb_wf_structure_checking/biobb_wf_structure_checking/notebooks/5360fe24-7e9a-4261-928a-04522e8646ba/1z83.final.pdb",
-      "metals": {},
-      "models": {
-        "nmodels": 1
-      },
-      "rem_hydrogen": {
-        "n_detected": 195
-      },
-      "sequences": {},
-      "stats": {
-        "biounit": false,
-        "ca_only": false,
-        "chain_guess_details": [
-          {
-            "A": {
-              "DNA": 0.0,
-              "Other": 0.01025641025641022,
-              "Protein": 0.9897435897435898,
-              "RNA": 0.0
-            }
-          }
-        ],
-        "chain_ids": [
-          {
-            "A": "Protein"
-          }
-        ],
-        "models_type": 0,
-        "nchains": [
-          1
-        ],
-        "nmodels": 1,
-        "stats": {
-          "num_ats": 3078,
-          "num_h": 1557,
-          "num_res": 195,
-          "num_wat": 0,
-          "res_h": 195,
-          "res_hetats": 0,
-          "res_insc": 0,
-          "res_ligands": 0
-        },
-        "total_charge": null
-      },
-      "water": {}
-    }
-    None</pre></div>
+<pre>HBox(children=(Output(layout=Layout(width='50%')), Output(layout=Layout(width='50%'))))</pre>
 </div>
 </div>
 </div>
