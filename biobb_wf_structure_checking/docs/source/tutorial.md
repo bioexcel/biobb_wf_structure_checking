@@ -131,10 +131,6 @@ import ipywidgets
 pdbCode = "1z83" # Should be replaced to check different structures 
 ```
 
-
-    
-
-
 <a id="fetch"></a>
 ***
 ## Fetching PDB structure
@@ -2690,9 +2686,1081 @@ two_columns = ipywidgets.widgets.HBox([output1, output2])
 display(two_columns)
 ```
 
-
-    HBox(children=(Output(layout=Layout(width='50%')), Output(layout=Layout(width='50%'))))
-
+<div class="highlight" style="width: 50%; float:left;">
+    <pre>{
+      "FASTA": {
+        "canonical": "",
+        "structure": ">pdb_sq_A Frags: 0-194\nSMEEKLKKTNIIFVVGGPGSGKGTQCEKIVQKYGYTHLSTGDLLRSEVSSGSARGKKLSE\nIMEKGQLVPLETVLDMLRDAMVAKVNTSKGFLIDGYPREVQQGEEFERRIGQPTLLLYVD\nAGPETMTQRLLKRGETSGRVDDNEETIKKRLETYYKATEPVIAFYEKRGIVRKVNAEGSV\nDSVFSQVCTHLDALL\n>pdb_sq_B Frags: 0-194\nSMEEKLKKTNIIFVVGGPGSGKGTQCEKIVQKYGYTHLSTGDLLRSEVSSGSARGKKLSE\nIMEKGQLVPLETVLDMLRDAMVAKVNTSKGFLIDGYPREVQQGEEFERRIGQPTLLLYVD\nAGPETMTQRLLKRGETSGRVDDNEETIKKRLETYYKATEPVIAFYEKRGIVRKVNAEGSV\nDSVFSQVCTHLDALL\n>pdb_sq_C Frags: 0-194\nSMEEKLKKTNIIFVVGGPGSGKGTQCEKIVQKYGYTHLSTGDLLRSEVSSGSARGKKLSE\nIMEKGQLVPLETVLDMLRDAMVAKVNTSKGFLIDGYPREVQQGEEFERRIGQPTLLLYVD\nAGPETMTQRLLKRGETSGRVDDNEETIKKRLETYYKATEPVIAFYEKRGIVRKVNAEGSV\nDSVFSQVCTHLDALL\n"
+      },
+      "add_hydrogen": {
+        "ionic_detected": [
+          "GLU A2",
+          "GLU A3",
+          "LYS A4",
+          "LYS A6",
+          "LYS A7",
+          "LYS A21",
+          "CYS A25",
+          "GLU A26",
+          "LYS A27",
+          "LYS A31",
+          "TYR A32",
+          "TYR A34",
+          "HIS A36",
+          "ASP A41",
+          "ARG A44",
+          "GLU A46",
+          "ARG A53",
+          "LYS A55",
+          "LYS A56",
+          "GLU A59",
+          "GLU A62",
+          "LYS A63",
+          "GLU A70",
+          "ASP A74",
+          "ARG A77",
+          "ASP A78",
+          "LYS A83",
+          "LYS A88",
+          "ASP A93",
+          "TYR A95",
+          "ARG A97",
+          "GLU A98",
+          "GLU A103",
+          "GLU A104",
+          "GLU A106",
+          "ARG A107",
+          "ARG A108",
+          "TYR A117",
+          "ASP A119",
+          "GLU A123",
+          "ARG A128",
+          "LYS A131",
+          "ARG A132",
+          "GLU A134",
+          "ARG A138",
+          "ASP A140",
+          "ASP A141",
+          "GLU A143",
+          "GLU A144",
+          "LYS A147",
+          "LYS A148",
+          "ARG A149",
+          "GLU A151",
+          "TYR A153",
+          "TYR A154",
+          "LYS A155",
+          "GLU A158",
+          "TYR A164",
+          "GLU A165",
+          "LYS A166",
+          "ARG A167",
+          "ARG A171",
+          "LYS A172",
+          "GLU A176",
+          "ASP A180",
+          "CYS A187",
+          "HIS A189",
+          "ASP A191",
+          "GLU B2",
+          "GLU B3",
+          "LYS B4",
+          "LYS B6",
+          "LYS B7",
+          "LYS B21",
+          "CYS B25",
+          "GLU B26",
+          "LYS B27",
+          "LYS B31",
+          "TYR B32",
+          "TYR B34",
+          "HIS B36",
+          "ASP B41",
+          "ARG B44",
+          "GLU B46",
+          "ARG B53",
+          "LYS B55",
+          "LYS B56",
+          "GLU B59",
+          "GLU B62",
+          "LYS B63",
+          "GLU B70",
+          "ASP B74",
+          "ARG B77",
+          "ASP B78",
+          "LYS B83",
+          "LYS B88",
+          "ASP B93",
+          "TYR B95",
+          "ARG B97",
+          "GLU B98",
+          "GLU B103",
+          "GLU B104",
+          "GLU B106",
+          "ARG B107",
+          "ARG B108",
+          "TYR B117",
+          "ASP B119",
+          "GLU B123",
+          "ARG B128",
+          "LYS B131",
+          "ARG B132",
+          "GLU B134",
+          "ARG B138",
+          "ASP B140",
+          "ASP B141",
+          "GLU B143",
+          "GLU B144",
+          "LYS B147",
+          "LYS B148",
+          "ARG B149",
+          "GLU B151",
+          "TYR B153",
+          "TYR B154",
+          "LYS B155",
+          "GLU B158",
+          "TYR B164",
+          "GLU B165",
+          "LYS B166",
+          "ARG B167",
+          "ARG B171",
+          "LYS B172",
+          "GLU B176",
+          "ASP B180",
+          "CYS B187",
+          "HIS B189",
+          "ASP B191",
+          "GLU C2",
+          "GLU C3",
+          "LYS C4",
+          "LYS C6",
+          "LYS C7",
+          "LYS C21",
+          "CYS C25",
+          "GLU C26",
+          "LYS C27",
+          "LYS C31",
+          "TYR C32",
+          "TYR C34",
+          "HIS C36",
+          "ASP C41",
+          "ARG C44",
+          "GLU C46",
+          "ARG C53",
+          "LYS C55",
+          "LYS C56",
+          "GLU C59",
+          "GLU C62",
+          "LYS C63",
+          "GLU C70",
+          "ASP C74",
+          "ARG C77",
+          "ASP C78",
+          "LYS C83",
+          "LYS C88",
+          "ASP C93",
+          "TYR C95",
+          "ARG C97",
+          "GLU C98",
+          "GLU C103",
+          "GLU C104",
+          "GLU C106",
+          "ARG C107",
+          "ARG C108",
+          "TYR C117",
+          "ASP C119",
+          "GLU C123",
+          "ARG C128",
+          "LYS C131",
+          "ARG C132",
+          "GLU C134",
+          "ARG C138",
+          "ASP C140",
+          "ASP C141",
+          "GLU C143",
+          "GLU C144",
+          "LYS C147",
+          "LYS C148",
+          "ARG C149",
+          "GLU C151",
+          "TYR C153",
+          "TYR C154",
+          "LYS C155",
+          "GLU C158",
+          "TYR C164",
+          "GLU C165",
+          "LYS C166",
+          "ARG C167",
+          "ARG C171",
+          "LYS C172",
+          "GLU C176",
+          "ASP C180",
+          "CYS C187",
+          "HIS C189",
+          "ASP C191"
+        ]
+      },
+      "altloc": {
+        "ASN A85": {
+          "CA": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CB": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CG": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "ND2": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "OD1": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ]
+        },
+        "GLU B165": {
+          "CA": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CB": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CD": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CG": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "OE1": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "OE2": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ]
+        },
+        "GLU C143": {
+          "CA": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CB": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CD": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CG": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "OE1": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "OE2": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ]
+        },
+        "SER A45": {
+          "CA": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CB": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "OG": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ]
+        },
+        "VAL A67": {
+          "CA": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CB": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CG1": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ],
+          "CG2": [
+            {
+              "loc_label": "A",
+              "occupancy": 0.5
+            },
+            {
+              "loc_label": "B",
+              "occupancy": 0.5
+            }
+          ]
+        }
+      },
+      "amide": {
+        "n_amides": 36
+      },
+      "backbone": {
+        "missing_atoms": {
+          "LEU A194": [
+            "OXT"
+          ],
+          "LEU B194": [
+            "OXT"
+          ],
+          "LEU C194": [
+            "OXT"
+          ]
+        }
+      },
+      "chains": {
+        "A": "Protein/0",
+        "B": "Protein/0",
+        "C": "Protein/0",
+        "unlabelled": false
+      },
+      "chiral": {
+        "n_chirals": 69
+      },
+      "chiral_bck": {
+        "n_chirals": 528
+      },
+      "cistransbck": {
+        "cis": [
+          [
+            "TYR A95",
+            "PRO A96",
+            2.032
+          ],
+          [
+            "TYR B95",
+            "PRO B96",
+            -3.952
+          ],
+          [
+            "TYR C95",
+            "PRO C96",
+            3.605
+          ],
+          [
+            "SER C136",
+            "GLY C137",
+            1.028
+          ]
+        ]
+      },
+      "clashes": {
+        "detected": {
+          "apolar": [
+            {
+              "at1": "GLU A46.OE1",
+              "at2": "MET A75.CE",
+              "dist": 2.651
+            },
+            {
+              "at1": "ARG A53.O",
+              "at2": "LYS A56.CG",
+              "dist": 2.7251
+            },
+            {
+              "at1": "GLU A123.O",
+              "at2": "GLN A127.CG",
+              "dist": 2.8177
+            },
+            {
+              "at1": "GLU B70.CD",
+              "at2": " ZN B642.ZN",
+              "dist": 2.893
+            },
+            {
+              "at1": "ASP C74.CG",
+              "at2": " ZN C645.ZN",
+              "dist": 2.7006
+            }
+          ],
+          "negative": [
+            {
+              "at1": "GLU A70.OE2",
+              "at2": "ASP A74.OD2",
+              "dist": 3.3062
+            },
+            {
+              "at1": "GLU A70.OE2",
+              "at2": "GLU B70.OE1",
+              "dist": 3.4246
+            },
+            {
+              "at1": "GLU A70.OE2",
+              "at2": "GLU B104.OE1",
+              "dist": 3.4053
+            },
+            {
+              "at1": "ASP A74.OD1",
+              "at2": "GLU B70.OE2",
+              "dist": 3.1557
+            },
+            {
+              "at1": "ASP A74.OD2",
+              "at2": "GLU B104.OE1",
+              "dist": 3.0494
+            },
+            {
+              "at1": "GLU C70.OE2",
+              "at2": "ASP C74.OD1",
+              "dist": 3.2633
+            }
+          ],
+          "polar_acceptor": [
+            {
+              "at1": "GLU A2.OE2",
+              "at2": "ILE A109.O",
+              "dist": 2.5821
+            },
+            {
+              "at1": "SER A58.O",
+              "at2": "GLU A62.OE2",
+              "dist": 2.9717
+            },
+            {
+              "at1": "ASP A74.OD2",
+              "at2": "GLU B104.OE1",
+              "dist": 3.0494
+            }
+          ],
+          "polar_donor": [],
+          "positive": [
+            {
+              "at1": "ARG A44.NH1",
+              "at2": "ARG A138.NH1",
+              "dist": 3.4254
+            },
+            {
+              "at1": "ARG A132.NH2",
+              "at2": "ARG A138.NE",
+              "dist": 3.3889
+            },
+            {
+              "at1": "LYS B6.NZ",
+              "at2": "ARG C171.NH2",
+              "dist": 3.439
+            },
+            {
+              "at1": "ARG B44.NH1",
+              "at2": "ARG B138.NH1",
+              "dist": 3.2688
+            },
+            {
+              "at1": "ARG B138.NH2",
+              "at2": "ARG B149.NH2",
+              "dist": 3.3051
+            },
+            {
+              "at1": "ARG C44.NH1",
+              "at2": "ARG C138.NH1",
+              "dist": 3.3648
+            },
+            {
+              "at1": "ARG C132.NH2",
+              "at2": "ARG C138.NH1",
+              "dist": 3.3057
+            },
+            {
+              "at1": "ARG C138.NH2",
+              "at2": "ARG C149.NH2",
+              "dist": 3.3646
+            }
+          ],
+          "severe": []
+        }
+      },
+      "fixside": {
+        "detected_missing": {
+          "ARG C53": [
+            "CD",
+            "NE",
+            "CZ",
+            "NH1",
+            "NH2"
+          ],
+          "GLN A127": [
+            "CD",
+            "OE1",
+            "NE2"
+          ],
+          "GLN B100": [
+            "CG",
+            "CD",
+            "OE1",
+            "NE2"
+          ],
+          "GLN B127": [
+            "CD",
+            "OE1",
+            "NE2"
+          ],
+          "GLN C127": [
+            "CD",
+            "OE1",
+            "NE2"
+          ],
+          "GLU A123": [
+            "CD",
+            "OE1",
+            "OE2"
+          ],
+          "GLU A143": [
+            "CD",
+            "OE1",
+            "OE2"
+          ],
+          "GLU B123": [
+            "CG",
+            "CD",
+            "OE1",
+            "OE2"
+          ],
+          "GLU B151": [
+            "CD",
+            "OE1",
+            "OE2"
+          ],
+          "GLU B3": [
+            "OE1",
+            "OE2"
+          ],
+          "GLU C123": [
+            "CD",
+            "OE1",
+            "OE2"
+          ],
+          "GLU C134": [
+            "CD",
+            "OE1",
+            "OE2"
+          ],
+          "GLU C2": [
+            "CD",
+            "OE1",
+            "OE2"
+          ],
+          "GLU C59": [
+            "CD",
+            "OE1",
+            "OE2"
+          ],
+          "LEU B193": [
+            "CD1",
+            "CD2"
+          ],
+          "LEU C193": [
+            "CG",
+            "CD1",
+            "CD2"
+          ],
+          "LYS A155": [
+            "CE",
+            "NZ"
+          ],
+          "LYS A56": [
+            "CD",
+            "CE",
+            "NZ"
+          ],
+          "LYS A63": [
+            "CD",
+            "CE",
+            "NZ"
+          ],
+          "LYS A7": [
+            "CE",
+            "NZ"
+          ],
+          "LYS B131": [
+            "CD",
+            "CE",
+            "NZ"
+          ],
+          "LYS B155": [
+            "CE",
+            "NZ"
+          ],
+          "LYS B166": [
+            "CE",
+            "NZ"
+          ],
+          "LYS B55": [
+            "CD",
+            "CE",
+            "NZ"
+          ],
+          "LYS B56": [
+            "CD",
+            "CE",
+            "NZ"
+          ],
+          "LYS B7": [
+            "CD",
+            "CE",
+            "NZ"
+          ],
+          "LYS C131": [
+            "CD",
+            "CE",
+            "NZ"
+          ],
+          "LYS C55": [
+            "CE",
+            "NZ"
+          ],
+          "LYS C56": [
+            "CE",
+            "NZ"
+          ],
+          "LYS C7": [
+            "CE",
+            "NZ"
+          ],
+          "LYS C83": [
+            "CE",
+            "NZ"
+          ],
+          "LYS C88": [
+            "CE",
+            "NZ"
+          ]
+        }
+      },
+      "getss": {},
+      "headers": {
+        "entry_id": "",
+        "method": "unknown",
+        "resolution": "N.A.",
+        "title": ""
+      },
+      "inscodes": {},
+      "ligands": {
+        "detected": [
+          " ZN A601",
+          " ZN A641",
+          "SO4 A702",
+          "AP5 A631",
+          " ZN B611",
+          " ZN B642",
+          " ZN B643",
+          "SO4 B701",
+          "SO4 B703",
+          "AP5 B632",
+          " ZN C621",
+          " ZN C644",
+          " ZN C645",
+          "AP5 C633"
+        ]
+      },
+      "loaded_structure": "/Users/gbayarri/projects/BioBB/tutorials/biobb_wf_structure_checking/biobb_wf_structure_checking/notebooks/ff4482b7-13f1-4a56-a2f1-3698589289d2/1z83.pdb",
+      "metals": {
+        "detected": [
+          " ZN A601",
+          " ZN A641",
+          " ZN B611",
+          " ZN B642",
+          " ZN B643",
+          " ZN C621",
+          " ZN C644",
+          " ZN C645"
+        ]
+      },
+      "models": {
+        "nmodels": 1
+      },
+      "rem_hydrogen": {},
+      "sequences": {},
+      "stats": {
+        "biounit": false,
+        "ca_only": false,
+        "chain_guess_details": [
+          {
+            "A": {
+              "DNA": 0.0,
+              "Other": 0.02010050251256279,
+              "Protein": 0.9798994974874372,
+              "RNA": 0.0
+            },
+            "B": {
+              "DNA": 0.0,
+              "Other": 0.02985074626865669,
+              "Protein": 0.9701492537313433,
+              "RNA": 0.0
+            },
+            "C": {
+              "DNA": 0.0,
+              "Other": 0.02010050251256279,
+              "Protein": 0.9798994974874372,
+              "RNA": 0.0
+            }
+          }
+        ],
+        "chain_ids": [
+          {
+            "A": "Protein",
+            "B": "Protein",
+            "C": "Protein"
+          }
+        ],
+        "models_type": 0,
+        "nchains": [
+          3
+        ],
+        "nmodels": 1,
+        "stats": {
+          "num_ats": 5123,
+          "num_h": 0,
+          "num_res": 1057,
+          "num_wat": 458,
+          "res_h": 0,
+          "res_hetats": 472,
+          "res_insc": 0,
+          "res_ligands": 14
+        },
+        "total_charge": null
+      },
+      "water": {
+        "n_detected": 458
+      }
+    }
+    None</pre></div>
+  <div class="highlight" style="width: 49%; float:left; margin-left:1%;">
+    <pre>{
+      "FASTA": {
+        "canonical": "",
+        "structure": ">pdb_sq_A Frags: 1-195\nSMEEKLKKTNIIFVVGGPGSGKGTQCEKIVQKYGYTHLSTGDLLRSEVSSGSARGKKLSE\nIMEKGQLVPLETVLDMLRDAMVAKVNTSKGFLIDGYPREVQQGEEFERRIGQPTLLLYVD\nAGPETMTQRLLKRGETSGRVDDNEETIKKRLETYYKATEPVIAFYEKRGIVRKVNAEGSV\nDSVFSQVCTHLDALL\n"
+      },
+      "add_hydrogen": {
+        "ionic_detected": [
+          "GLU A3",
+          "GLU A4",
+          "LYS A5",
+          "LYS A7",
+          "LYS A8",
+          "LYS A22",
+          "CYS A26",
+          "GLU A27",
+          "LYS A28",
+          "LYS A32",
+          "TYR A33",
+          "TYR A35",
+          "ASP A42",
+          "ARG A45",
+          "GLU A47",
+          "ARG A54",
+          "LYS A56",
+          "LYS A57",
+          "GLU A60",
+          "GLU A63",
+          "LYS A64",
+          "GLU A71",
+          "ASP A75",
+          "ARG A78",
+          "ASP A79",
+          "LYS A84",
+          "LYS A89",
+          "ASP A94",
+          "TYR A96",
+          "ARG A98",
+          "GLU A99",
+          "GLU A104",
+          "GLU A105",
+          "GLU A107",
+          "ARG A108",
+          "ARG A109",
+          "TYR A118",
+          "ASP A120",
+          "GLU A124",
+          "ARG A129",
+          "LYS A132",
+          "ARG A133",
+          "GLU A135",
+          "ARG A139",
+          "ASP A141",
+          "ASP A142",
+          "GLU A144",
+          "GLU A145",
+          "LYS A148",
+          "LYS A149",
+          "ARG A150",
+          "GLU A152",
+          "TYR A154",
+          "TYR A155",
+          "LYS A156",
+          "GLU A159",
+          "TYR A165",
+          "GLU A166",
+          "LYS A167",
+          "ARG A168",
+          "ARG A172",
+          "LYS A173",
+          "GLU A177",
+          "ASP A181",
+          "CYS A188",
+          "ASP A192"
+        ]
+      },
+      "altloc": {},
+      "amide": {
+        "n_amides": 12
+      },
+      "backbone": {},
+      "chains": {
+        "A": "Protein/0",
+        "unlabelled": false
+      },
+      "chiral": {
+        "n_chirals": 23
+      },
+      "chiral_bck": {
+        "n_chirals": 176
+      },
+      "cistransbck": {
+        "cis": [
+          [
+            "TYR A96",
+            "PRO A97",
+            -10.786
+          ]
+        ]
+      },
+      "clashes": {
+        "detected": {
+          "apolar": [],
+          "negative": [],
+          "polar_acceptor": [],
+          "polar_donor": [],
+          "positive": [
+            {
+              "at1": "ARG A45.NH2",
+              "at2": "ARG A139.NH1",
+              "dist": 3.3053
+            },
+            {
+              "at1": "ARG A133.NH2",
+              "at2": "ARG A139.NE",
+              "dist": 3.1559
+            }
+          ],
+          "severe": []
+        }
+      },
+      "fixside": {},
+      "getss": {},
+      "headers": {
+        "entry_id": "",
+        "method": "unknown",
+        "resolution": "N.A.",
+        "title": ""
+      },
+      "inscodes": {},
+      "ligands": {},
+      "loaded_structure": "/Users/gbayarri/projects/BioBB/tutorials/biobb_wf_structure_checking/biobb_wf_structure_checking/notebooks/5360fe24-7e9a-4261-928a-04522e8646ba/1z83.final.pdb",
+      "metals": {},
+      "models": {
+        "nmodels": 1
+      },
+      "rem_hydrogen": {
+        "n_detected": 195
+      },
+      "sequences": {},
+      "stats": {
+        "biounit": false,
+        "ca_only": false,
+        "chain_guess_details": [
+          {
+            "A": {
+              "DNA": 0.0,
+              "Other": 0.01025641025641022,
+              "Protein": 0.9897435897435898,
+              "RNA": 0.0
+            }
+          }
+        ],
+        "chain_ids": [
+          {
+            "A": "Protein"
+          }
+        ],
+        "models_type": 0,
+        "nchains": [
+          1
+        ],
+        "nmodels": 1,
+        "stats": {
+          "num_ats": 3078,
+          "num_h": 1557,
+          "num_res": 195,
+          "num_wat": 0,
+          "res_h": 195,
+          "res_hetats": 0,
+          "res_insc": 0,
+          "res_ligands": 0
+        },
+        "total_charge": null
+      },
+      "water": {}
+    }
+    None</pre></div>
 
 ***
 <a id="questions"></a>
