@@ -127,6 +127,7 @@ if 'google.colab' in sys.modules:
 ```python
 import nglview
 import ipywidgets
+import sys
 
 pdbCode = "1z83" # Should be replaced to check different structures 
 ```
