@@ -11,4 +11,4 @@ dependencies:
   - biobb_amber==5.2.0
   - modeller
   - jupyter
-  - nglview
+  - nglview<=4.0
